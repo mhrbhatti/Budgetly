@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Budgetly — BytesStack.net</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #f5f5f3;
+      --surface:  #ffffff;
+      --border:   #e4e4e0;
+      --text:     #1a1a18;
+      --muted:    #6b6b67;
+      --green:    #0f6e56;
+      --red:      #a32d2d;
+      --red-bg:   #fcebeb;
+      --amber:    #854f0b;
+      --radius:   14px;
+      --rsm:      10px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 50px;
+    }
+
+    /* Header */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 20px 14px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+    .brand-name { font-size: 22px; font-weight: 700; letter-spacing: -.5px; }
+    .brand-name span { color: var(--green); }
+    .brand-by { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .month-badge {
+      font-size: 12px; color: var(--muted);
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 20px; padding: 4px 10px;
+    }
+
+    /* Layout */
+    .content { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+    /* Balance card */
+    .balance-card {
+      background: var(--surface); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 22px 20px 18px; text-align: center;
+    }
+    .bal-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .bal-amount { font-size: 38px; font-weight: 700; letter-spacing: -1px; transition: color .3s; }
+    .bal-amount.ok   { color: var(--green); }
+    .bal-amount.low  { color: var(--amber); }
+    .bal-amount.over { color: var(--red); }
+    .bar-wrap { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin: 12px 0 10px; }
+    .bar-fill { height: 100%; border-radius: 3px; transition: width .4s, background .3s; }
+    .bal-sub { display: flex; justify-content: center; gap: 20px; font-size: 12px; color: var(--muted); }
+    .bal-sub b { font-weight: 600; color: var(--text); }
+    .spent-val { color: var(--red); font-weight: 600; }
+
+    /* Totals */
+    .totals-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .total-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--rsm); padding: 12px 14px; }
+    .total-box .tl { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+    .total-box .tv { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .tv.green { color: var(--green); }
+    .tv.red   { color: var(--red); }
+
+    /* Section label */
+    .sec-label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .04em; margin-bottom: 8px; }
+
+    /* Add form */
+    .add-form {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .form-title { font-size: 14px; font-weight: 600; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .fg { display: flex; flex-direction: column; gap: 4px; }
+    .fl { font-size: 11px; color: var(--muted); font-weight: 500; }
+    .fg input {
+      width: 100%; padding: 10px 12px; font-size: 15px;
+      border: 1px solid var(--border); border-radius: var(--rsm);
+      background: var(--bg); color: var(--text); outline: none; -webkit-appearance: none;
+    }
+    .fg input:focus { border-color: #999; background: #fff; }
+    .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 2px; }
+    .btn {
+      padding: 12px; font-size: 14px; font-weight: 600; border: none;
+      border-radius: var(--rsm); cursor: pointer;
+      transition: opacity .15s, transform .1s; -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active { transform: scale(0.97); opacity: .9; }
+    .btn-income  { background: var(--green); color: #fff; }
+    .btn-expense { background: var(--text); color: #fff; }
+
+    /* Lists */
+    .list-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .list-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 16px; border-bottom: 1px solid var(--border); gap: 10px;
+    }
+    .list-item:last-child { border-bottom: none; }
+    .li-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+    .li-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .li-dot.income  { background: var(--green); }
+    .li-dot.expense { background: var(--red); }
+    .li-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .li-note { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .li-date { font-size: 11px; color: var(--muted); }
+    .li-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .li-amt { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .li-amt.income  { color: var(--green); }
+    .li-amt.expense { color: var(--red); }
+    .del-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); font-size: 18px; line-height: 1;
+      padding: 4px 6px; border-radius: 6px; -webkit-tap-highlight-color: transparent;
+    }
+    .del-btn:active { background: var(--red-bg); color: var(--red); }
+    .empty { padding: 24px 16px; text-align: center; font-size: 13px; color: var(--muted); }
+
+    /* Export button */
+    .export-btn {
+      width: 100%; padding: 14px; font-size: 15px; font-weight: 600;
+      background: var(--green); color: #fff; border: none;
+      border-radius: var(--radius); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 9px;
+      -webkit-tap-highlight-color: transparent; transition: opacity .15s;
+    }
+    .export-btn:active { opacity: .88; }
+    .export-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+    /* Footer */
+    .footer { text-align: center; font-size: 11px; color: var(--muted); }
+    .footer a { color: var(--muted); text-decoration: none; }
+
+    /* Toast */
+    .toast-wrap { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 99; pointer-events: none; }
+    .toast { background: var(--text); color: #fff; padding: 9px 18px; border-radius: 20px; font-size: 13px; white-space: nowrap; opacity: 0; transition: opacity .2s; }
+    .toast.show { opacity: 1; }
+
+    /* ============================================
+       PRINT STYLES — PDF receipt
+       Everything the user sees when they
+       tap "Save as PDF" in the print dialog
+    ============================================ */
+    #pdf-receipt { display: none; }
+
+    @media print {
+      /* Hide the whole app */
+      body > .header,
+      body > .content { display: none !important; }
+
+      /* Show only the receipt */
+      #pdf-receipt { display: block !important; }
+
+      body {
+        background: #fff;
+        font-family: Georgia, 'Times New Roman', serif;
+        color: #111;
+        padding: 0;
+        margin: 0;
+      }
+    }
+
+    /* Receipt layout */
+    .receipt {
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 36px 32px 28px;
+      font-family: Georgia, 'Times New Roman', serif;
+      color: #111;
+    }
+
+    /* Receipt header */
+    .r-header {
+      text-align: center;
+      padding-bottom: 18px;
+      border-bottom: 2px solid #111;
+      margin-bottom: 22px;
+    }
+    .r-logo { font-size: 28px; font-weight: 700; letter-spacing: -.5px; font-family: Georgia, serif; }
+    .r-logo span { color: #0f6e56; }
+    .r-by { font-size: 11px; color: #666; margin-top: 2px; }
+    .r-title {
+      font-size: 13px; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; margin-top: 12px; color: #111;
+    }
+    .r-meta { font-size: 11px; color: #666; margin-top: 4px; }
+
+    /* Summary boxes */
+    .r-summary {
+      display: table;
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 24px;
+      border-collapse: separate;
+    }
+    .r-sum-row { display: table-row; }
+    .r-sum-cell {
+      display: table-cell;
+      width: 33.33%;
+      padding: 12px 8px;
+      text-align: center;
+      border-right: 1px solid #ddd;
+      vertical-align: middle;
+    }
+    .r-sum-cell:last-child { border-right: none; }
+    .r-sum-label { font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: #888; display: block; margin-bottom: 4px; }
+    .r-sum-val { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; display: block; }
+    .r-sum-val.green { color: #0f6e56; }
+    .r-sum-val.red   { color: #a32d2d; }
+
+    /* Section heading */
+    .r-section {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .09em; color: #666;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 5px; margin-bottom: 10px; margin-top: 6px;
+    }
+
+    /* Tables */
+    .r-table { width: 100%; border-collapse: collapse; margin-bottom: 22px; font-size: 12px; }
+    .r-table th {
+      text-align: left; padding: 4px 0 5px;
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .05em; color: #888;
+      border-bottom: 1px solid #ddd;
+    }
+    .r-table th:last-child { text-align: right; }
+    .r-table td { padding: 8px 0; border-bottom: 1px solid #f0f0f0; vertical-align: top; line-height: 1.4; }
+    .r-table td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+    .r-table tr:last-child td { border-bottom: none; }
+    .r-table .subtotal td {
+      font-weight: 700; border-top: 1px solid #111;
+      border-bottom: none; padding-top: 9px; font-size: 13px;
+    }
+    .c-green { color: #0f6e56; font-weight: 600; }
+    .c-red   { color: #a32d2d; font-weight: 600; }
+    .c-muted { color: #888; font-style: italic; }
+
+    /* Balance line */
+    .r-balance {
+      border-top: 2px solid #111;
+      padding-top: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 24px;
+    }
+    .r-balance-label { font-size: 14px; font-weight: 700; }
+    .r-balance-val   { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+    /* Receipt footer */
+    .r-footer {
+      border-top: 1px solid #ddd;
+      padding-top: 14px;
+      text-align: center;
+      font-size: 10px;
+      color: #888;
+      line-height: 1.7;
+    }
+    .r-footer strong { display: block; color: #333; font-size: 11px; margin-bottom: 3px; }
+  </style>
+</head>
+<body>
+
+  <!-- App UI -->
+  <div class="header">
+    <div>
+      <div class="brand-name">Budget<span>ly</span></div>
+      <div class="brand-by">by <a href="https://bytesstack.net" style="color:inherit;text-decoration:none">BytesStack.net</a></div>
+    </div>
+    <div class="month-badge" id="month-badge"></div>
+  </div>
+
+  <div class="content">
+
+    <div class="balance-card">
+      <div class="bal-label" id="bal-label">Remaining balance</div>
+      <div class="bal-amount ok" id="bal-amount">Rs.0</div>
+      <div class="bar-wrap"><div class="bar-fill" id="bar-fill" style="width:0%;background:#0f6e56"></div></div>
+      <div class="bal-sub">
+        <span>Income <b id="sub-income">Rs.0</b></span>
+        <span>Spent <span class="spent-val" id="sub-spent">Rs.0</span></span>
+      </div>
+    </div>
+
+    <div class="totals-row">
+      <div class="total-box"><div class="tl">Total income</div><div class="tv green" id="total-income">Rs.0</div></div>
+      <div class="total-box"><div class="tl">Total spent</div><div class="tv red" id="total-spent">Rs.0</div></div>
+    </div>
+
+    <div class="add-form">
+      <div class="form-title">Add entry</div>
+      <div class="row2">
+        <div class="fg">
+          <div class="fl">Source / Note</div>
+          <input type="text" id="f-note" placeholder="e.g. Salary, Rent…" autocomplete="off"/>
+        </div>
+        <div class="fg">
+          <div class="fl">Amount (Rs.)</div>
+          <input type="number" id="f-amt" placeholder="0" min="1" inputmode="numeric"/>
+        </div>
+      </div>
+      <div class="fg">
+        <div class="fl">Date</div>
+        <input type="date" id="f-date"/>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-income"  onclick="addEntry('income')">+ Add income</button>
+        <button class="btn btn-expense" onclick="addEntry('expense')">− Expense</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-label" id="inc-label">INCOME SOURCES</div>
+      <div id="inc-list"></div>
+    </div>
+
+    <div>
+      <div class="sec-label" id="exp-label">EXPENSES</div>
+      <div id="exp-list"></div>
+    </div>
+
+    <button class="export-btn" onclick="exportPDF()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="12" y1="18" x2="12" y2="12"/>
+        <polyline points="9 15 12 18 15 15"/>
+      </svg>
+      Download monthly receipt as PDF
+    </button>
+
+    <div class="footer">Budgetly &copy; <span id="yr"></span> &mdash; <a href="https://bytesstack.net">BytesStack.net</a></div>
+
+  </div>
+
+  <!-- PDF Receipt — hidden on screen, printed as PDF -->
+  <div id="pdf-receipt"></div>
+
+  <div class="toast-wrap"><div class="toast" id="toast"></div></div>
+
+  <script>
+    let entries = [];
+    let nextId  = 1;
+
+    const now   = new Date();
+    const today = now.toISOString().slice(0, 10);
+
+    document.getElementById('f-date').value   = today;
+    document.getElementById('yr').textContent = now.getFullYear();
+    document.getElementById('month-badge').textContent =
+      now.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+    /* ── Helpers ── */
+    function fmt(n) {
+      return 'Rs.' + Math.round(Math.abs(n)).toLocaleString();
+    }
+
+    function toast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(t._tid);
+      t._tid = setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    /* ── Add entry ── */
+    function addEntry(type) {
+      const note = document.getElementById('f-note').value.trim();
+      const amt  = parseFloat(document.getElementById('f-amt').value);
+      const date = document.getElementById('f-date').value || today;
+      if (!note)          { toast('Enter a source or note'); return; }
+      if (!amt || amt<=0) { toast('Enter a valid amount');   return; }
+      entries.unshift({ id: nextId++, type, note, amt, date });
+      document.getElementById('f-note').value = '';
+      document.getElementById('f-amt').value  = '';
+      refresh();
+    }
+
+    /* ── Delete entry ── */
+    function del(id) {
+      entries = entries.filter(e => e.id !== id);
+      refresh();
+    }
+
+    /* ── Refresh UI ── */
+    function refresh() {
+      const incomes  = entries.filter(e => e.type === 'income');
+      const expenses = entries.filter(e => e.type === 'expense');
+      const totalIn  = incomes.reduce((s,e)  => s + e.amt, 0);
+      const totalEx  = expenses.reduce((s,e) => s + e.amt, 0);
+      const remain   = totalIn - totalEx;
+      const pct      = totalIn > 0 ? Math.min(Math.round(totalEx / totalIn * 100), 100) : 0;
+
+      const balEl = document.getElementById('bal-amount');
+      balEl.textContent = fmt(remain);
+      balEl.className   = 'bal-amount ' + (pct >= 100 ? 'over' : pct >= 80 ? 'low' : 'ok');
+      document.getElementById('bal-label').textContent =
+        pct >= 100 ? 'Over budget!' : pct >= 80 ? 'Running low' : 'Remaining balance';
+
+      const bar = document.getElementById('bar-fill');
+      bar.style.width      = pct + '%';
+      bar.style.background = pct >= 100 ? '#a32d2d' : pct >= 80 ? '#854f0b' : '#0f6e56';
+
+      document.getElementById('sub-income').textContent   = fmt(totalIn);
+      document.getElementById('sub-spent').textContent    = fmt(totalEx);
+      document.getElementById('total-income').textContent = fmt(totalIn);
+      document.getElementById('total-spent').textContent  = fmt(totalEx);
+
+      document.getElementById('inc-label').textContent =
+        'INCOME SOURCES' + (incomes.length ? ' (' + incomes.length + ')' : '');
+      document.getElementById('exp-label').textContent =
+        'EXPENSES' + (expenses.length ? ' (' + expenses.length + ')' : '');
+
+      renderList(incomes,  'inc-list', 'income');
+      renderList(expenses, 'exp-list', 'expense');
+    }
+
+    function renderList(items, containerId, type) {
+      const el = document.getElementById(containerId);
+      if (!items.length) {
+        el.innerHTML = '<div class="list-card"><div class="empty">None yet</div></div>';
+        return;
+      }
+      el.innerHTML = '<div class="list-card">' +
+        items.map(e => `
+          <div class="list-item">
+            <div class="li-left">
+              <div class="li-dot ${type}"></div>
+              <div class="li-info">
+                <div class="li-note">${e.note}</div>
+                <div class="li-date">${e.date}</div>
+              </div>
+            </div>
+            <div class="li-right">
+              <div class="li-amt ${type}">${type === 'income' ? '+' : '−'} ${fmt(e.amt)}</div>
+              <button class="del-btn" onclick="del(${e.id})">×</button>
+            </div>
+          </div>`).join('') + '</div>';
+    }
+
+    /* ── Export PDF ──
+       Builds a clean receipt inside #pdf-receipt,
+       then calls window.print().
+       On mobile: Share → Print → Save as PDF
+       On desktop: Ctrl+P → Save as PDF
+    ── */
+    function exportPDF() {
+      const incomes  = entries.filter(e => e.type === 'income');
+      const expenses = entries.filter(e => e.type === 'expense');
+      const totalIn  = incomes.reduce((s,e)  => s + e.amt, 0);
+      const totalEx  = expenses.reduce((s,e) => s + e.amt, 0);
+      const remain   = totalIn - totalEx;
+      const balColor = remain < 0 ? 'red' : 'green';
+
+      const monthStr  = now.toLocaleString('default', { month: 'long', year: 'numeric' });
+      const printedOn = new Date().toLocaleDateString('default', { day:'numeric', month:'long', year:'numeric' });
+      const receiptNo = 'BDG-' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + '-' + String(Math.floor(Math.random()*9000)+1000);
+
+      /* Income table rows */
+      function buildRows(list, cls) {
+        if (!list.length) {
+          return `<tr><td colspan="3" class="c-muted" style="padding:10px 0">No entries this month</td></tr>`;
+        }
+        const sorted = [...list].sort((a,b) => a.date.localeCompare(b.date));
+        return sorted.map(e =>
+          `<tr>
+            <td style="color:#555;font-size:11px">${e.date}</td>
+            <td>${e.note}</td>
+            <td class="${cls}">${cls === 'c-green' ? '+' : '−'} ${fmt(e.amt)}</td>
+          </tr>`
+        ).join('');
+      }
+
+      const incRows = buildRows(incomes,  'c-green');
+      const expRows = buildRows(expenses, 'c-red');
+
+      document.getElementById('pdf-receipt').innerHTML = `
+        <div class="receipt">
+
+          <div class="r-header">
+            <div class="r-logo">Budget<span>ly</span></div>
+            <div class="r-by">by BytesStack.net</div>
+            <div class="r-title">Monthly Financial Statement</div>
+            <div class="r-meta">
+              Period: ${monthStr} &nbsp;&bull;&nbsp;
+              Receipt no: ${receiptNo} &nbsp;&bull;&nbsp;
+              Generated: ${printedOn}
+            </div>
+          </div>
+
+          <div class="r-summary">
+            <div class="r-sum-row">
+              <div class="r-sum-cell">
+                <span class="r-sum-label">Total income</span>
+                <span class="r-sum-val green">${fmt(totalIn)}</span>
+              </div>
+              <div class="r-sum-cell">
+                <span class="r-sum-label">Total spent</span>
+                <span class="r-sum-val red">${fmt(totalEx)}</span>
+              </div>
+              <div class="r-sum-cell">
+                <span class="r-sum-label">Balance</span>
+                <span class="r-sum-val ${balColor}">${fmt(remain)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="r-section">Income sources</div>
+          <table class="r-table">
+            <thead><tr><th>Date</th><th>Source</th><th>Amount</th></tr></thead>
+            <tbody>
+              ${incRows}
+              ${incomes.length ? `<tr class="subtotal"><td colspan="2">Total income</td><td class="c-green">${fmt(totalIn)}</td></tr>` : ''}
+            </tbody>
+          </table>
+
+          <div class="r-section">Expenses</div>
+          <table class="r-table">
+            <thead><tr><th>Date</th><th>Note</th><th>Amount</th></tr></thead>
+            <tbody>
+              ${expRows}
+              ${expenses.length ? `<tr class="subtotal"><td colspan="2">Total spent</td><td class="c-red">${fmt(totalEx)}</td></tr>` : ''}
+            </tbody>
+          </table>
+
+          <div class="r-balance">
+            <div class="r-balance-label">Closing balance</div>
+            <div class="r-balance-val" style="color:${remain < 0 ? '#a32d2d' : '#0f6e56'}">${remain < 0 ? '− ' : '+ '}${fmt(remain)}</div>
+          </div>
+
+          <div class="r-footer">
+            <strong>Budgetly &mdash; BytesStack.net</strong>
+            This is a personal finance summary. Not an official bank or accounting document.<br/>
+            Generated automatically by Budgetly on ${printedOn}.
+          </div>
+
+        </div>`;
+
+      /* Slight delay so DOM renders before print dialog */
+      setTimeout(() => window.print(), 150);
+    }
+
+    refresh();
+  </script>
+</body>
+</html>
