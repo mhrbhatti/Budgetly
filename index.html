@@ -355,8 +355,10 @@
   <div class="toast-wrap"><div class="toast" id="toast"></div></div>
 
   <script>
-    let entries = [];
-    let nextId  = 1;
+    // --- CHANGED: Load from localStorage if it exists ---
+    let entries = JSON.parse(localStorage.getItem('budgetly_entries')) || [];
+    // Calculate the nextId based on existing entries so they don't overlap
+    let nextId = entries.length > 0 ? Math.max(...entries.map(e => e.id)) + 1 : 1;
 
     const now   = new Date();
     const today = now.toISOString().slice(0, 10);
@@ -379,6 +381,11 @@
       t._tid = setTimeout(() => t.classList.remove('show'), 2000);
     }
 
+    // --- CHANGED: Added save function ---
+    function saveToStorage() {
+      localStorage.setItem('budgetly_entries', JSON.stringify(entries));
+    }
+
     /* ── Add entry ── */
     function addEntry(type) {
       const note = document.getElementById('f-note').value.trim();
@@ -389,12 +396,16 @@
       entries.unshift({ id: nextId++, type, note, amt, date });
       document.getElementById('f-note').value = '';
       document.getElementById('f-amt').value  = '';
+      
+      saveToStorage(); // Save after adding
       refresh();
     }
 
     /* ── Delete entry ── */
     function del(id) {
       entries = entries.filter(e => e.id !== id);
+      
+      saveToStorage(); // Save after deleting
       refresh();
     }
 
@@ -454,12 +465,7 @@
           </div>`).join('') + '</div>';
     }
 
-    /* ── Export PDF ──
-       Builds a clean receipt inside #pdf-receipt,
-       then calls window.print().
-       On mobile: Share → Print → Save as PDF
-       On desktop: Ctrl+P → Save as PDF
-    ── */
+    /* ── Export PDF ── */
     function exportPDF() {
       const incomes  = entries.filter(e => e.type === 'income');
       const expenses = entries.filter(e => e.type === 'expense');
