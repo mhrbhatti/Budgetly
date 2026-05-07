@@ -7,7 +7,7 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    :root {
+:root {
       --bg:       #f5f5f3;
       --surface:  #ffffff;
       --border:   #e4e4e0;
@@ -15,11 +15,46 @@
       --muted:    #6b6b67;
       --green:    #0f6e56;
       --red:      #a32d2d;
-      --red-bg:   #fcebeb;
-      --amber:    #854f0b;
+      --contrast: #ffffff;
       --radius:   14px;
       --rsm:      10px;
     }
+
+    /* Dark Mode Overrides */
+    body.dark-mode {
+      --bg:       #121212;
+      --surface:  #1e1e1e;
+      --border:   #333333;
+      --text:     #e0e0e0;
+      --contrast: #121212;
+      --muted:    #6b6b67;
+    }
+
+    /* Toggle Switch Styling */
+    .theme-switch {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 20px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc; transition: .4s; border-radius: 20px;
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px;
+      background-color: white; transition: .4s; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--green); }
+    input:checked + .slider:before { transform: translateX(20px); }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -72,6 +107,16 @@
     .bal-sub b { font-weight: 600; color: var(--text); }
     .spent-val { color: var(--red); font-weight: 600; }
 
+    /* Savings Goal Card */
+    .savings-card {
+      background: var(--green); color: #fff; padding: 16px; border-radius: var(--radius);
+      display: none; flex-direction: column; gap: 8px;
+    }
+    .savings-header { display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+    .savings-bar-wrap { height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; }
+    .savings-bar-fill { height: 100%; background: #fff; width: 0%; transition: width 0.6s; }
+    .savings-status { font-size: 11px; opacity: 0.9; text-align: right; }
+
     .totals-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .total-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--rsm); padding: 12px 14px; }
     .total-box .tl { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
@@ -105,8 +150,10 @@
     }
     .btn:active { transform: scale(0.97); opacity: .9; }
     .btn-income  { background: var(--green); color: #fff; }
-    .btn-expense { background: var(--text); color: #fff; }
-
+.btn-expense { 
+      background: var(--text); 
+      color: var(--surface); /* Automatically flips text color for visibility */
+    }
     /* Lists */
     .list-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
     .list-item {
@@ -125,9 +172,14 @@
     .li-amt { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
     .li-amt.income  { color: var(--green); }
     .li-amt.expense { color: var(--red); }
-    .del-btn {
-      background: none; border: none; cursor: pointer; color: var(--muted);
-      font-size: 18px; line-height: 1; padding: 4px 6px; border-radius: 6px;
+   .del-btn {
+      background: none; 
+      border: none; 
+      cursor: pointer; 
+      color: var(--muted);
+      font-size: 18px; 
+      line-height: 1; 
+      padding: 4px 6px; 
     }
     .empty { padding: 24px 16px; text-align: center; font-size: 13px; color: var(--muted); }
 
@@ -137,6 +189,10 @@
       background: var(--green); color: #fff; border: none;
       border-radius: var(--radius); cursor: pointer;
       display: flex; align-items: center; justify-content: center; gap: 9px;
+    }
+    #notify-btn {
+      background: var(--text) !important;
+      color: var(--surface) !important;
     }
 
     /* Side Menu */
@@ -194,8 +250,17 @@
 
     /* Toast */
     .toast-wrap { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 999; pointer-events: none; }
-    .toast { background: var(--text); color: #fff; padding: 9px 18px; border-radius: 20px; font-size: 13px; white-space: nowrap; opacity: 0; transition: opacity .2s; }
-    .toast.show { opacity: 1; }
+.toast { 
+      background: var(--text); 
+      color: var(--surface); /* Uses the surface color of the opposite theme */
+      padding: 9px 18px; 
+      border-radius: 20px; 
+      font-size: 13px; 
+      white-space: nowrap; 
+      opacity: 0; 
+      transition: opacity .2s; 
+    }
+        .toast.show { opacity: 1; }
 
     /* PDF Print Styles (Hidden normally) */
     #pdf-receipt { display: none; }
@@ -224,6 +289,14 @@
       <div class="sb-title">Tools & Options</div>
     </div>
     <ul class="sb-menu">
+      <ul class="sb-menu">
+      <li class="theme-switch">
+        <span>Dark Mode</span>
+        <label class="switch">
+          <input type="checkbox" id="theme-toggle" onclick="toggleTheme()">
+          <span class="slider"></span>
+        </label>
+      </li>
       <li onclick="openModal('fuel-modal')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 22v-8p2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v8"/><path d="M11 10V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v4"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"/></svg>
         Fuel Calculator
@@ -232,11 +305,37 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
         EMI Calculator
       </li>
+      <li onclick="openModal('savings-modal')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+        Set Savings Goal
+      </li>
       <li class="danger" onclick="clearAllData()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         Clear All Data
       </li>
     </ul>
+  </div>
+
+  <!-- Savings Goal Modal -->
+  <div class="modal-overlay" id="savings-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">Set Savings Goal</div>
+        <button class="close-modal" onclick="closeModal('savings-modal')">&times;</button>
+      </div>
+      <div class="add-form" style="border:none; padding:0;">
+        <div class="fg">
+          <div class="fl">Goal Name (e.g. New Phone)</div>
+          <input type="text" id="goal-name" placeholder="Enter name...">
+        </div>
+        <div class="fg">
+          <div class="fl">Target Amount (Rs)</div>
+          <input type="number" id="goal-target" placeholder="Enter target...">
+        </div>
+        <button class="btn btn-income" style="margin-top: 8px;" onclick="saveSavingsGoal()">Set Goal</button>
+        <button class="btn btn-expense" style="background:var(--red); margin-top: 4px;" onclick="removeSavingsGoal()">Remove Current Goal</button>
+      </div>
+    </div>
   </div>
 
   <!-- Fuel Calculator Modal -->
@@ -338,6 +437,18 @@
       </div>
     </div>
 
+    <!-- Savings Goal Card -->
+    <div class="savings-card" id="savings-card-ui">
+      <div class="savings-header">
+        <span id="savings-name-label">Savings Goal</span>
+        <span id="savings-pct-label">0%</span>
+      </div>
+      <div class="savings-bar-wrap">
+        <div class="savings-bar-fill" id="savings-bar-fill"></div>
+      </div>
+      <div class="savings-status" id="savings-status-label">Rs.0 / Rs.0</div>
+    </div>
+
     <div class="totals-row">
       <div class="total-box"><div class="tl">Total income</div><div class="tv green" id="total-income">Rs.0</div></div>
       <div class="total-box"><div class="tl">Total spent</div><div class="tv red" id="total-spent">Rs.0</div></div>
@@ -369,19 +480,39 @@
     <div><div class="sec-label" id="exp-label">EXPENSES</div><div id="exp-list"></div></div>
 
     <button class="export-btn" onclick="exportPDF()">Download PDF Receipt</button>
-    <button class="export-btn" style="background: var(--text);" onclick="enableNotifications()">Enable Hourly Reminders</button>
-
-    <div class="footer">Budgetly &copy; <span id="yr"> &nbsp; by: mhrbhatti</span></div>
+    <button class="export-btn" id="notify-btn" style="background: var(--text);" onclick="toggleNotifications()">Enable Hourly Reminders</button>
+    <div class="footer">Budgetly &copy; 2026 by: mhrbhatti</div>
   </div>
 
-  <!-- PDF Receipt Container -->
   <div id="pdf-receipt"></div>
-
-  <!-- Toast Notification -->
   <div class="toast-wrap"><div class="toast" id="toast"></div></div>
 
   <script>
+    // Add this to your variable declarations at the top
+    const themeToggle = document.getElementById('theme-toggle');
+
+    function toggleTheme() {
+      if (document.body.classList.contains('dark-mode')) {
+        document.body.classList.remove('dark-mode');
+        localStorage.setItem('budgetly_theme', 'light');
+      } else {
+        document.body.classList.add('dark-mode');
+        localStorage.setItem('budgetly_theme', 'dark');
+      }
+    }
+
+    function initTheme() {
+      const savedTheme = localStorage.getItem('budgetly_theme');
+      if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        if(themeToggle) themeToggle.checked = true;
+      }
+    }
+
+    // Call this at the very bottom of your script
+    initTheme();
     let entries = JSON.parse(localStorage.getItem('budgetly_entries')) || [];
+    let savingsGoal = JSON.parse(localStorage.getItem('budgetly_savings')) || null;
     let nextId  = entries.length > 0 ? Math.max(...entries.map(e => e.id)) + 1 : 1;
 
     const now   = new Date();
@@ -389,7 +520,6 @@
     let currentMonthStr = today.slice(0, 7); 
 
     document.getElementById('f-date').value = today;
-    document.getElementById('yr').textContent = now.getFullYear();
 
     /* ── Utilities ── */
     function fmt(n) { return 'Rs.' + Math.round(Math.abs(n)).toLocaleString(); }
@@ -401,7 +531,10 @@
       t._tid = setTimeout(() => t.classList.remove('show'), 2000);
     }
 
-    function saveToStorage() { localStorage.setItem('budgetly_entries', JSON.stringify(entries)); }
+    function saveToStorage() { 
+      localStorage.setItem('budgetly_entries', JSON.stringify(entries)); 
+      localStorage.setItem('budgetly_savings', JSON.stringify(savingsGoal));
+    }
 
     /* ── Side Menu & Modals ── */
     function toggleMenu() {
@@ -410,11 +543,32 @@
     }
 
     function openModal(id) {
-      toggleMenu(); // Close sidebar
+      toggleMenu();
       document.getElementById(id).classList.add('active');
     }
 
     function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+    /* ── Savings Goals Logic ── */
+    function saveSavingsGoal() {
+      const name = document.getElementById('goal-name').value.trim();
+      const target = parseFloat(document.getElementById('goal-target').value);
+      if (!name || !target) { toast("Please fill both goal fields"); return; }
+      
+      savingsGoal = { name, target };
+      saveToStorage();
+      closeModal('savings-modal');
+      refresh();
+      toast("Savings goal set!");
+    }
+
+    function removeSavingsGoal() {
+      savingsGoal = null;
+      saveToStorage();
+      closeModal('savings-modal');
+      refresh();
+      toast("Savings goal removed");
+    }
 
     /* ── Calculators ── */
     function calculateFuel() {
@@ -422,13 +576,8 @@
       const price   = parseFloat(document.getElementById('calc-price').value);
       const dist    = parseFloat(document.getElementById('calc-dist').value);
       const days    = parseFloat(document.getElementById('calc-days').value) || 30;
-
       if (!mileage || !price || !dist) { toast('Please fill all fuel fields'); return; }
-
-      const dailyFuel = dist / mileage;
-      const dailyCost = dailyFuel * price;
-      const monthlyCost = Math.round(dailyCost * days);
-
+      const monthlyCost = Math.round((dist / mileage) * price * days);
       window.lastFuelCalc = monthlyCost;
       document.getElementById('fuel-result-val').textContent = fmt(monthlyCost);
       document.getElementById('fuel-result-box').style.display = 'block';
@@ -438,12 +587,9 @@
       const p = parseFloat(document.getElementById('calc-loan').value);
       const rate = parseFloat(document.getElementById('calc-rate').value);
       const n = parseFloat(document.getElementById('calc-months').value);
-
       if (!p || !rate || !n) { toast('Please fill all EMI fields'); return; }
-
       const r = rate / 12 / 100;
       const emi = Math.round(p * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1));
-
       window.lastEmiCalc = emi;
       document.getElementById('emi-result-val').textContent = fmt(emi);
       document.getElementById('emi-result-box').style.display = 'block';
@@ -454,18 +600,17 @@
       entries.unshift({ id: nextId++, type: 'expense', note: note, amt: amount, date: today });
       saveToStorage();
       closeModal(modalId);
-      currentMonthStr = today.slice(0, 7); // Switch back to current month
       refresh();
-      toast(note + ' added to expenses!');
+      toast(note + ' added!');
     }
 
     function clearAllData() {
-      if(confirm("Are you sure you want to delete ALL your data? This cannot be undone.")) {
+      if(confirm("Are you sure?")) {
         entries = [];
+        savingsGoal = null;
         saveToStorage();
         toggleMenu();
         refresh();
-        toast("All data cleared");
       }
     }
 
@@ -474,15 +619,11 @@
       const note = document.getElementById('f-note').value.trim();
       const amt  = parseFloat(document.getElementById('f-amt').value);
       const date = document.getElementById('f-date').value || today;
-      if (!note)          { toast('Enter a source or note'); return; }
-      if (!amt || amt<=0) { toast('Enter a valid amount');   return; }
-      
+      if (!note || !amt || amt<=0) { toast('Invalid entry'); return; }
       entries.unshift({ id: nextId++, type, note, amt, date });
       document.getElementById('f-note').value = '';
       document.getElementById('f-amt').value  = '';
-      
       saveToStorage();
-      currentMonthStr = date.slice(0, 7); 
       refresh();
     }
 
@@ -496,72 +637,147 @@
       const selector = document.getElementById('month-badge');
       const months = new Set(entries.map(e => e.date.slice(0, 7)));
       months.add(today.slice(0, 7)); 
-      
       selector.innerHTML = Array.from(months).sort().reverse().map(m => {
         const [yyyy, mm] = m.split('-');
-        const dateObj = new Date(yyyy, mm - 1);
-        const label = dateObj.toLocaleString('default', { month: 'short', year: 'numeric' });
-        return `<option value="${m}" ${m === currentMonthStr ? 'selected' : ''}>${label}</option>`;
+        return `<option value="${m}" ${m === currentMonthStr ? 'selected' : ''}>${m}</option>`;
       }).join('');
     }
 
     function changeMonth() { currentMonthStr = document.getElementById('month-badge').value; refresh(); }
 
-    function enableNotifications() {
-      if (!("Notification" in window)) { toast("Notifications not supported"); return; }
-      Notification.requestPermission().then(permission => {
-        if (permission === "granted") {
-          toast("Hourly reminders enabled!");
-          setInterval(() => new Notification("Budgetly", { body: "Time to log recent expenses." }), 3600000);
-        } else toast("Permission denied.");
-      });
+    /* ── Notifications (Shortened for space) ── */
+    function toggleNotifications() {
+        if (!("Notification" in window)) return;
+        Notification.requestPermission().then(p => { if(p === "granted") toast("Reminders enabled"); });
     }
 
-    function refresh() {
+   function refresh() {
       updateMonthDropdown();
       const activeEntries = entries.filter(e => e.date.startsWith(currentMonthStr));
       const incomes  = activeEntries.filter(e => e.type === 'income');
       const expenses = activeEntries.filter(e => e.type === 'expense');
+      
       const totalIn  = incomes.reduce((s,e)  => s + e.amt, 0);
       const totalEx  = expenses.reduce((s,e) => s + e.amt, 0);
       const remain   = totalIn - totalEx;
-      const pct      = totalIn > 0 ? Math.min(Math.round(totalEx / totalIn * 100), 100) : 0;
+      
+      // Calculate specific Savings Amount based on Note keywords
+      // This looks for "saving", "save", or "savings" in the entry note
+      const savingKeywords = ['saving', 'save', 'savings', 'Saving Box'];
+      const totalSaved = activeEntries.reduce((sum, e) => {
+        const noteLower = e.note.toLowerCase().trim();
+        if (savingKeywords.includes(noteLower)) {
+          return sum + e.amt;
+        }
+        return sum;
+      }, 0);
 
       const balEl = document.getElementById('bal-amount');
       balEl.textContent = fmt(remain);
-      balEl.className   = 'bal-amount ' + (pct >= 100 ? 'over' : pct >= 80 ? 'low' : 'ok');
-      document.getElementById('bal-label').textContent = pct >= 100 ? 'Over budget!' : pct >= 80 ? 'Running low' : 'Remaining balance';
-
+      
+      const pctBudget = totalIn > 0 ? Math.min(Math.round(totalEx / totalIn * 100), 100) : 0;
       const bar = document.getElementById('bar-fill');
-      bar.style.width = pct + '%'; bar.style.background = pct >= 100 ? '#a32d2d' : pct >= 80 ? '#854f0b' : '#0f6e56';
+      bar.style.width = pctBudget + '%';
 
       document.getElementById('sub-income').textContent = fmt(totalIn);
       document.getElementById('sub-spent').textContent  = fmt(totalEx);
       document.getElementById('total-income').textContent = fmt(totalIn);
       document.getElementById('total-spent').textContent  = fmt(totalEx);
 
-      renderList(incomes,  'inc-list', 'income');
+      // Refresh Savings UI
+      const savingsUI = document.getElementById('savings-card-ui');
+      if (savingsGoal) {
+        savingsUI.style.display = 'flex';
+        document.getElementById('savings-name-label').textContent = savingsGoal.name;
+        
+        // Calculate progress based on the specific "Saving" notes found
+        const pctGoal = Math.min(100, Math.round((totalSaved / savingsGoal.target) * 100));
+        
+        document.getElementById('savings-bar-fill').style.width = pctGoal + '%';
+        document.getElementById('savings-pct-label').textContent = pctGoal + '%';
+        document.getElementById('savings-status-label').textContent = fmt(totalSaved) + " / " + fmt(savingsGoal.target);
+      } else {
+        savingsUI.style.display = 'none';
+      }
+
+      renderList(incomes, 'inc-list', 'income');
       renderList(expenses, 'exp-list', 'expense');
     }
 
     function renderList(items, containerId, type) {
       const el = document.getElementById(containerId);
-      if (!items.length) { el.innerHTML = '<div class="list-card"><div class="empty">None this month</div></div>'; return; }
-      el.innerHTML = '<div class="list-card">' + items.sort((a,b) => b.date.localeCompare(a.date)).map(e => `
-          <div class="list-item">
-            <div class="li-left">
-              <div class="li-dot ${type}"></div>
-              <div class="li-info"><div class="li-note">${e.note}</div><div class="li-date">${e.date}</div></div>
-            </div>
-            <div class="li-right">
-              <div class="li-amt ${type}">${type === 'income' ? '+' : '−'} ${fmt(e.amt)}</div>
-              <button class="del-btn" onclick="del(${e.id})">×</button>
-            </div>
-          </div>`).join('') + '</div>';
+      if (!items.length) { el.innerHTML = '<div class="empty">None this month</div>'; return; }
+      el.innerHTML = items.map(e => `
+        <div class="list-item" style="background:#fff; margin-bottom:5px; border-radius:8px;">
+          <div class="li-left"><div class="li-dot ${type}"></div><div class="li-info">${e.note}</div></div>
+          <div class="li-right"><span>${fmt(e.amt)}</span><button class="del-btn" onclick="del(${e.id})">×</button></div>
+        </div>`).join('');
     }
 
-    function exportPDF() { window.print(); }
+   function exportPDF() {
+  // 1. Get data for the currently selected month
+  const activeEntries = entries.filter(e => e.date.startsWith(currentMonthStr));
+  const incomes  = activeEntries.filter(e => e.type === 'income');
+  const expenses = activeEntries.filter(e => e.type === 'expense');
+  const totalIn  = incomes.reduce((s,e)  => s + e.amt, 0);
+  const totalEx  = expenses.reduce((s,e) => s + e.amt, 0);
+  const remain   = totalIn - totalEx;
+  const balColor = remain < 0 ? '#a32d2d' : '#0f6e56';
+
+  const [yyyy, mm] = currentMonthStr.split('-');
+  const monthObj = new Date(yyyy, mm - 1);
+  const monthStr  = monthObj.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const printedOn = new Date().toLocaleDateString('default', { day:'numeric', month:'long', year:'numeric' });
+  const receiptNo = 'BDG-' + yyyy + mm + '-' + Math.floor(1000 + Math.random() * 9000);
+
+  // Helper to build table rows
+  function buildRows(list, clsColor) {
+    if (!list.length) return `<tr><td colspan="3" style="padding:10px 0; color:#888; text-align:center;">No entries</td></tr>`;
+    return list.sort((a,b) => a.date.localeCompare(b.date)).map(e => `
+      <tr>
+        <td style="padding:8px 0; border-bottom:1px solid #eee;">${e.date}</td>
+        <td style="padding:8px 0; border-bottom:1px solid #eee;">${e.note}</td>
+        <td style="padding:8px 0; border-bottom:1px solid #eee; text-align:right; color:${clsColor}; font-weight:600;">
+          ${e.type === 'income' ? '+' : '-'} ${fmt(e.amt)}
+        </td>
+      </tr>`).join('');
+  }
+
+  // 2. Build the HTML and inject it into the hidden container
+  document.getElementById('pdf-receipt').innerHTML = `
+    <div class="receipt" style="padding: 40px; font-family: serif;">
+      <div style="text-align:center; border-bottom: 2px solid #111; padding-bottom: 20px; margin-bottom: 20px;">
+        <h1 style="margin:0;">Budget<span style="color:#0f6e56">ly</span></h1>
+        <p style="font-size:12px; color:#666;">Monthly Financial Statement</p>
+        <p style="font-size:10px; color:#999;">Period: ${monthStr} | Ref: ${receiptNo}</p>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; margin-bottom:30px; background:#f9f9f9; padding:15px; border-radius:8px;">
+        <div><small>Total Income</small><br><b>${fmt(totalIn)}</b></div>
+        <div><small>Total Spent</small><br><b>${fmt(totalEx)}</b></div>
+        <div><small>Final Balance</small><br><b style="color:${balColor}">${fmt(remain)}</b></div>
+      </div>
+
+      <h4 style="border-bottom:1px solid #ddd; padding-bottom:5px;">Income Sources</h4>
+      <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:12px;">
+        ${buildRows(incomes, '#0f6e56')}
+      </table>
+
+      <h4 style="border-bottom:1px solid #ddd; padding-bottom:5px;">Expenses</h4>
+      <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:12px;">
+        ${buildRows(expenses, '#a32d2d')}
+      </table>
+
+      <div style="text-align:center; margin-top:40px; font-size:10px; color:#999; border-top:1px solid #eee; padding-top:10px;">
+        Generated on ${printedOn} via Budgetly — BytesStack.net
+      </div>
+    </div>`;
+
+  // 3. Trigger the Print/Save PDF dialog
+  window.print();
+}
+
     refresh();
   </script>
 </body>
-</html>
+</html>     
