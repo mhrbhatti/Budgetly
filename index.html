@@ -1,337 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>Budgetly — BytesStack.net</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="theme-color" content="#0f6e56"/>
+<meta name="description" content="Budgetly — a simple monthly budget tracker by BytesStack.net"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<title>Budgetly — BytesStack.net</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f5f5f3;--surface:#fff;--border:#e4e4e0;--text:#1a1a18;--muted:#6b6b67;--green:#0f6e56;--red:#a32d2d;--amber:#b7791f;--radius:14px;--rsm:10px}
+body.dark-mode{--bg:#121212;--surface:#1e1e1e;--border:#333;--text:#e8e8e6;--muted:#9a9a95;--green:#3fb68f;--red:#e5736f;--amber:#e0a63c}
+button{font-family:inherit}
+.qa .ic{font-size:12px}
+:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:calc(40px + env(safe-area-inset-bottom));-webkit-tap-highlight-color:transparent;transition:background .3s,color .3s}
+.app{max-width:520px;margin:0 auto}
 
-:root {
-      --bg:       #f5f5f3;
-      --surface:  #ffffff;
-      --border:   #e4e4e0;
-      --text:     #1a1a18;
-      --muted:    #6b6b67;
-      --green:    #0f6e56;
-      --red:      #a32d2d;
-      --contrast: #ffffff;
-      --radius:   14px;
-      --rsm:      10px;
-    }
+/* Header */
+.header{position:sticky;top:0;z-index:50;background:var(--surface);border-bottom:1px solid var(--border);padding:calc(14px + env(safe-area-inset-top)) 16px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.header-left{display:flex;align-items:center;gap:8px}
+.icon-btn{background:none;border:none;color:var(--text);width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.icon-btn:active{background:var(--bg)}
+.brand-name{font-size:21px;font-weight:700;letter-spacing:-.5px;line-height:1}
+.brand-name span{color:var(--green)}
+.brand-by{font-size:11px;color:var(--muted);margin-top:3px}
+.month-badge{font-size:13px;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:8px 12px;cursor:pointer;font-family:inherit}
 
-    /* Dark Mode Overrides */
-    body.dark-mode {
-      --bg:       #121212;
-      --surface:  #1e1e1e;
-      --border:   #333333;
-      --text:     #e0e0e0;
-      --contrast: #121212;
-      --muted:    #6b6b67;
-    }
+.content{padding:16px;display:flex;flex-direction:column;gap:16px}
 
-    /* Toggle Switch Styling */
-    .theme-switch {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-    }
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 40px;
-      height: 20px;
-    }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #ccc; transition: .4s; border-radius: 20px;
-    }
-    .slider:before {
-      position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px;
-      background-color: white; transition: .4s; border-radius: 50%;
-    }
-    input:checked + .slider { background-color: var(--green); }
-    input:checked + .slider:before { transform: translateX(20px); }
+/* Balance */
+.balance-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:22px 20px 18px;text-align:center}
+.bal-label{font-size:12px;color:var(--muted);margin-bottom:4px}
+.bal-amount{font-size:38px;font-weight:700;letter-spacing:-1px;font-variant-numeric:tabular-nums;transition:color .3s}
+.bal-amount.ok{color:var(--green)}.bal-amount.low{color:var(--amber)}.bal-amount.over{color:var(--red)}
+.bar-wrap{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin:14px 0 8px}
+.bar-fill{height:100%;border-radius:4px;transition:width .5s,background .3s;background:var(--green)}
+.bar-pct{font-size:11px;color:var(--muted);margin-bottom:10px}
+.bal-sub{display:flex;justify-content:center;gap:20px;font-size:12px;color:var(--muted)}
+.bal-sub b{font-weight:600;color:var(--text)}
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      padding-bottom: 50px;
-    }
+/* Savings */
+.savings-card{background:var(--green);color:#fff;padding:16px;border-radius:var(--radius);display:none;flex-direction:column;gap:8px}
+body.dark-mode .savings-card{color:#0b1f19}
+.savings-header{display:flex;justify-content:space-between;font-size:13px;font-weight:600}
+.savings-bar-wrap{height:6px;background:rgba(255,255,255,.3);border-radius:3px;overflow:hidden}
+.savings-bar-fill{height:100%;background:currentColor;width:0;transition:width .6s}
+.savings-status{font-size:11px;opacity:.9;text-align:right}
 
-    /* Header */
-    .header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 18px 20px 14px;
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-    }
-    .header-left { display: flex; align-items: center; gap: 12px; }
-    .menu-btn {
-      background: none; border: none; cursor: pointer; color: var(--text);
-      padding: 4px; display: flex; align-items: center; justify-content: center;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .brand-name { font-size: 22px; font-weight: 700; letter-spacing: -.5px; line-height: 1;}
-    .brand-name span { color: var(--green); }
-    .brand-by { font-size: 11px; color: var(--muted); margin-top: 4px; }
-    .month-badge {
-      font-size: 12px; color: var(--muted); background: var(--bg);
-      border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px;
-      outline: none; cursor: pointer; font-family: inherit; appearance: none;
-    }
+.totals-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.total-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--rsm);padding:12px 14px}
+.tl{font-size:11px;color:var(--muted);margin-bottom:3px}
+.tv{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+.tv.green{color:var(--green)}.tv.red{color:var(--red)}
 
-    /* Layout */
-    .content { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+/* Section titles */
+.sec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.sec-label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+.link-btn{background:none;border:none;color:var(--green);font-size:13px;font-weight:600;cursor:pointer;padding:6px 4px}
 
-    /* Balance card & Totals */
-    .balance-card {
-      background: var(--surface); border-radius: var(--radius);
-      border: 1px solid var(--border); padding: 22px 20px 18px; text-align: center;
-    }
-    .bal-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-    .bal-amount { font-size: 38px; font-weight: 700; letter-spacing: -1px; transition: color .3s; }
-    .bal-amount.ok   { color: var(--green); }
-    .bal-amount.low  { color: var(--amber); }
-    .bal-amount.over { color: var(--red); }
-    .bar-wrap { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin: 12px 0 10px; }
-    .bar-fill { height: 100%; border-radius: 3px; transition: width .4s, background .3s; }
-    .bal-sub { display: flex; justify-content: center; gap: 20px; font-size: 12px; color: var(--muted); }
-    .bal-sub b { font-weight: 600; color: var(--text); }
-    .spent-val { color: var(--red); font-weight: 600; }
+/* Essential quick cards */
+.qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:10px}
+.qcard{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);padding:12px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;text-align:center;min-height:88px;transition:transform .1s,border-color .2s}
+.qcard:active{transform:scale(.96)}
+.qi{font-size:26px;line-height:1;color:var(--green);display:flex;align-items:center;justify-content:center}
+.qn{font-size:13px;font-weight:600;margin-top:4px;max-width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qa{display:flex;align-items:center;justify-content:center;gap:3px;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.qcard.paid{border-color:var(--green)}
+.qcard.paid .qa{color:var(--green);font-weight:600}
+.qcard.add{border-style:dashed;align-items:center;justify-content:center;color:var(--muted)}
+.qcard.add .qi{font-size:26px}
+.qgrid.editing .qcard:not(.add){border:2px dashed var(--amber)}
 
-    /* Savings Goal Card */
-    .savings-card {
-      background: var(--green); color: #fff; padding: 16px; border-radius: var(--radius);
-      display: none; flex-direction: column; gap: 8px;
-    }
-    .savings-header { display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
-    .savings-bar-wrap { height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; }
-    .savings-bar-fill { height: 100%; background: #fff; width: 0%; transition: width 0.6s; }
-    .savings-status { font-size: 11px; opacity: 0.9; text-align: right; }
+/* Forms */
+.add-form{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px}
+.form-title{font-size:14px;font-weight:600}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fl{font-size:11px;color:var(--muted);font-weight:500}
+input,select{font-family:inherit}
+.fg input{width:100%;padding:12px;font-size:16px;border:1px solid var(--border);border-radius:var(--rsm);background:var(--bg);color:var(--text);outline:none;-webkit-appearance:none;appearance:none;min-height:46px}
+.fg input:focus{border-color:var(--green)}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px}
+.btn{padding:13px;font-size:15px;font-weight:600;border:none;border-radius:var(--rsm);cursor:pointer;transition:opacity .15s,transform .1s;width:100%}
+.btn:active{transform:scale(.97);opacity:.9}
+.btn-income{background:var(--green);color:#fff}
+body.dark-mode .btn-income{color:#0b1f19}
+.btn-expense{background:var(--text);color:var(--surface)}
+.btn-danger{background:var(--red);color:#fff}
+body.dark-mode .btn-danger{color:#1a0a0a}
 
-    .totals-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .total-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--rsm); padding: 12px 14px; }
-    .total-box .tl { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
-    .total-box .tv { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
-    .tv.green { color: var(--green); }
-    .tv.red   { color: var(--red); }
+/* Lists */
+.list-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.list-item{display:flex;align-items:center;justify-content:space-between;padding:10px 8px 10px 16px;border-bottom:1px solid var(--border);gap:10px}
+.list-item:last-child{border-bottom:none}
+.li-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.li-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.li-dot.income{background:var(--green)}.li-dot.expense{background:var(--red)}
+.li-info{display:flex;flex-direction:column;gap:2px;min-width:0}
+.li-note{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li-date{font-size:11px;color:var(--muted)}
+.li-right{display:flex;align-items:center;gap:2px;flex-shrink:0}
+.li-amt{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.li-amt.income{color:var(--green)}.li-amt.expense{color:var(--red)}
+.del-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:22px;width:40px;height:40px;border-radius:50%}
+.del-btn:active{background:var(--bg)}
+.empty{padding:22px 16px;text-align:center;font-size:13px;color:var(--muted)}
 
-    /* Forms & Buttons */
-    .sec-label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .04em; margin-bottom: 8px; }
-    
-    .add-form {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 10px;
-    }
-    .form-title { font-size: 14px; font-weight: 600; }
-    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .fg { display: flex; flex-direction: column; gap: 4px; }
-    .fl { font-size: 11px; color: var(--muted); font-weight: 500; }
-    .fg input {
-      width: 100%; padding: 10px 12px; font-size: 15px;
-      border: 1px solid var(--border); border-radius: var(--rsm);
-      background: var(--bg); color: var(--text); outline: none; -webkit-appearance: none;
-    }
-    .fg input:focus { border-color: #999; background: #fff; }
-    
-    .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 2px; }
-    .btn {
-      padding: 12px; font-size: 14px; font-weight: 600; border: none;
-      border-radius: var(--rsm); cursor: pointer;
-      transition: opacity .15s, transform .1s; -webkit-tap-highlight-color: transparent;
-    }
-    .btn:active { transform: scale(0.97); opacity: .9; }
-    .btn-income  { background: var(--green); color: #fff; }
-.btn-expense { 
-      background: var(--text); 
-      color: var(--surface); /* Automatically flips text color for visibility */
-    }
-    /* Lists */
-    .list-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-    .list-item {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 13px 16px; border-bottom: 1px solid var(--border); gap: 10px; color: black;
-    }
-    .list-item:last-child { border-bottom: none; }
-    .li-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
-    .li-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .li-dot.income  { background: var(--green); }
-    .li-dot.expense { background: var(--red); }
-    .li-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-    .li-note { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .li-date { font-size: 11px; color: var(--muted); }
-    .li-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-    .li-amt { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
-    .li-amt.income  { color: var(--green); }
-    .li-amt.expense { color: var(--red); }
-   .del-btn {
-      background: none; 
-      border: none; 
-      cursor: pointer; 
-      color: var(--muted);
-      font-size: 18px; 
-      line-height: 1; 
-      padding: 4px 6px; 
-    }
-    .empty { padding: 24px 16px; text-align: center; font-size: 13px; color: var(--muted); }
+.export-btn{width:100%;padding:14px;font-size:15px;font-weight:600;background:var(--green);color:#fff;border:none;border-radius:var(--radius);cursor:pointer}
+body.dark-mode .export-btn{color:#0b1f19}
+.export-btn.alt{background:var(--text);color:var(--surface)}
+.footer{text-align:center;font-size:11px;color:var(--muted)}
 
-    /* Export & Actions */
-    .export-btn {
-      width: 100%; padding: 14px; font-size: 15px; font-weight: 600;
-      background: var(--green); color: #fff; border: none;
-      border-radius: var(--radius); cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: 9px;
-    }
-    #notify-btn {
-      background: var(--text) !important;
-      color: var(--surface) !important;
-    }
+/* Sidebar */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.active{opacity:1;pointer-events:auto}
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:282px;max-width:85vw;background:var(--surface);z-index:101;transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;visibility:hidden}
+.sidebar.active{transform:none;visibility:visible}
+.sb-header{padding:calc(24px + env(safe-area-inset-top)) 20px 16px;border-bottom:1px solid var(--border);font-size:18px;font-weight:700;color:var(--green)}
+.sb-menu{list-style:none;flex:1;overflow-y:auto}
+.sb-menu li button{width:100%;background:none;border:none;border-bottom:1px solid var(--border);color:var(--text);padding:16px 20px;font-size:15px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:left}
+.sb-menu li button:active{background:var(--bg)}
+.sb-menu .ico{width:20px;display:flex;justify-content:center;color:var(--muted);font-size:20px}
+.sb-menu .danger{color:var(--red)}
 
-    /* Side Menu */
-    .sidebar-overlay {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5); z-index: 100;
-      opacity: 0; pointer-events: none; transition: opacity 0.3s;
-    }
-    .sidebar-overlay.active { opacity: 1; pointer-events: auto; }
-    
-    .sidebar {
-      position: fixed; top: 0; left: 0; bottom: 0; width: 280px;
-      background: var(--surface); z-index: 101;
-      transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      display: flex; flex-direction: column; box-shadow: 2px 0 12px rgba(0,0,0,0.1);
-    }
-    .sidebar.active { transform: translateX(0); }
-    
-    .sb-header { padding: 24px 20px 16px; border-bottom: 1px solid var(--border); }
-    .sb-title { font-size: 18px; font-weight: 700; color: var(--green); }
-    
-    .sb-menu { list-style: none; padding: 10px 0; flex: 1; overflow-y: auto; }
-    .sb-menu li {
-      padding: 16px 20px; font-size: 15px; font-weight: 500; cursor: pointer;
-      display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border);
-    }
-    .sb-menu li:hover { background: var(--bg); }
-    .sb-menu li svg { width: 18px; height: 18px; color: var(--muted); }
-    .sb-menu li.danger { color: var(--red); }
-    .sb-menu li.danger svg { color: var(--red); }
+/* Bottom-sheet modals */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.active{opacity:1;pointer-events:auto}
+.modal-box{background:var(--surface);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:20px 20px calc(24px + env(safe-area-inset-bottom));transform:translateY(40px);transition:transform .25s;max-height:92vh;overflow-y:auto}
+.modal-overlay.active .modal-box{transform:none}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.modal-title{font-size:17px;font-weight:700}
+.close-modal{background:none;border:none;font-size:26px;cursor:pointer;color:var(--muted);width:40px;height:40px}
+.modal-form{display:flex;flex-direction:column;gap:12px}
+.meta-row{display:flex;flex-direction:column;gap:12px}
+.picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:8px}
+.pick{height:46px;border:1px solid var(--border);background:var(--bg);color:var(--muted);border-radius:var(--rsm);cursor:pointer;font-size:22px;display:flex;align-items:center;justify-content:center}
+.pick.sel{border:2px solid var(--green);color:var(--green)}
+.ic{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.15em;flex-shrink:0}
+.result-box{background:var(--bg);padding:14px;border-radius:var(--rsm);text-align:center;border:1px dashed var(--border);display:none}
+.result-val{font-size:26px;font-weight:700;color:var(--red);margin:4px 0 12px}
 
-    /* Modals for Tools */
-    .modal-overlay {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5); z-index: 200; display: flex;
-      align-items: center; justify-content: center; padding: 20px;
-      opacity: 0; pointer-events: none; transition: opacity 0.2s;
-    }
-    .modal-overlay.active { opacity: 1; pointer-events: auto; }
-    .modal-box {
-      background: var(--surface); width: 100%; max-width: 400px;
-      border-radius: var(--radius); padding: 20px; transform: translateY(20px);
-      transition: transform 0.2s; max-height: 90vh; overflow-y: auto;
-    }
-    .modal-overlay.active .modal-box { transform: translateY(0); }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .modal-title { font-size: 16px; font-weight: 700; }
-    .close-modal { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--muted); }
-    
-    .result-box {
-      background: var(--bg); padding: 14px; border-radius: var(--rsm);
-      text-align: center; margin: 16px 0; border: 1px dashed var(--border); display: none;
-    }
-    .result-val { font-size: 24px; font-weight: 700; color: var(--red); margin-top: 4px; }
+/* Toast */
+.toast-wrap{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));left:0;right:0;display:flex;justify-content:center;z-index:999;pointer-events:none}
+.toast{background:var(--text);color:var(--surface);padding:10px 14px 10px 18px;border-radius:24px;font-size:13px;opacity:0;transform:translateY(10px);transition:opacity .2s,transform .2s;display:flex;align-items:center;gap:12px;max-width:90vw}
+.toast.show{opacity:1;transform:none;pointer-events:auto}
+.toast button{background:none;border:none;color:var(--green);font-weight:700;font-size:13px;cursor:pointer;padding:4px}
+body.dark-mode .toast button{color:#0f6e56}
 
-    /* Toast */
-    .toast-wrap { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 999; pointer-events: none; }
-.toast { 
-      background: var(--text); 
-      color: var(--surface); /* Uses the surface color of the opposite theme */
-      padding: 9px 18px; 
-      border-radius: 20px; 
-      font-size: 13px; 
-      white-space: nowrap; 
-      opacity: 0; 
-      transition: opacity .2s; 
-    }
-        .toast.show { opacity: 1; }
-    /* Splash Screen Styles */
-    #splash-screen {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: var(--bg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      transition: opacity 0.5s ease, visibility 0.5s;
-    }
-    
-    .splash-content { text-align: center; }
-    
-    .splash-logo {
-      font-size: 42px;
-      font-weight: 700;
-      color: var(--text);
-      letter-spacing: -1.5px;
-      margin-bottom: 20px;
-    }
-    .splash-logo span { color: var(--green); }
-    
-    .splash-loader {
-      width: 40px;
-      height: 40px;
-      border: 3px solid var(--border);
-      border-top: 3px solid var(--green);
-      border-radius: 50%;
-      margin: 0 auto 20px;
-      animation: spin 0.8s linear infinite;
-    }
-    
-    .splash-footer {
-      font-size: 12px;
-      color: var(--muted);
-      letter-spacing: 1px;
-    }
+/* Splash */
+#splash-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .5s,visibility .5s}
+.splash-content{text-align:center}
+.splash-logo{font-size:42px;font-weight:700;letter-spacing:-1.5px;margin-bottom:20px}
+.splash-logo span{color:var(--green)}
+.splash-loader{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;margin:0 auto 18px;animation:spin .8s linear infinite}
+.splash-footer{font-size:12px;color:var(--muted);letter-spacing:1px}
+.splash-hidden{opacity:0;visibility:hidden}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation-duration:.01ms!important}}
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    /* Class to hide splash */
-    .splash-hidden {
-      opacity: 0;
-      visibility: hidden;
-    }
-
-    /* PDF Print Styles (Hidden normally) */
-    #pdf-receipt { display: none; }
-    @media print {
-      body > :not(#pdf-receipt) { display: none !important; }
-      #pdf-receipt { display: block !important; }
-      body { background: #fff; font-family: Georgia, serif; color: #111; padding: 0; margin: 0; }
-      .receipt { width: 100%; max-width: 520px; margin: 0 auto; padding: 36px 32px; font-size: 12px; }
-      .r-header { text-align: center; border-bottom: 2px solid #111; padding-bottom: 18px; margin-bottom: 22px; }
-      .r-logo { font-size: 28px; font-weight: 700; } .r-logo span { color: #0f6e56; }
-      .r-table { width: 100%; border-collapse: collapse; margin-bottom: 22px; }
-      .r-table th { text-align: left; padding: 4px 0; border-bottom: 1px solid #ddd; }
-      .r-table td { padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
-      .r-table th:last-child, .r-table td:last-child { text-align: right; }
-      .c-green { color: #0f6e56; } .c-red { color: #a32d2d; }
-    }
-    .footer { text-align: center; font-size: 11px; color: var(--muted); margin-top: 20px; }
-  </style>
+#pdf-receipt{display:none}
+@media print{body>:not(#pdf-receipt){display:none!important}#pdf-receipt{display:block!important}body{background:#fff;color:#111;padding:0}}
+</style>
 </head>
 <body>
-  <!-- Splash Screen -->
-<div id="splash-screen">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-house" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /> <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></symbol><symbol id="i-shopping-cart" viewBox="0 0 24 24"><circle cx="8" cy="21" r="1" /> <circle cx="19" cy="21" r="1" /> <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" /></symbol><symbol id="i-zap" viewBox="0 0 24 24"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" /></symbol><symbol id="i-flame" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" /></symbol><symbol id="i-droplet" viewBox="0 0 24 24"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z" /></symbol><symbol id="i-wifi" viewBox="0 0 24 24"><path d="M12 20h.01" /> <path d="M2 8.82a15 15 0 0 1 20 0" /> <path d="M5 12.859a10 10 0 0 1 14 0" /> <path d="M8.5 16.429a5 5 0 0 1 7 0" /></symbol><symbol id="i-fuel" viewBox="0 0 24 24"><line x1="3" x2="15" y1="22" y2="22" /> <line x1="4" x2="14" y1="9" y2="9" /> <path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18" /> <path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2a2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5" /></symbol><symbol id="i-smartphone" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2" ry="2" /> <path d="M12 18h.01" /></symbol><symbol id="i-car" viewBox="0 0 24 24"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" /> <circle cx="7" cy="17" r="2" /> <path d="M9 17h6" /> <circle cx="17" cy="17" r="2" /></symbol><symbol id="i-bus" viewBox="0 0 24 24"><path d="M8 6v6" /> <path d="M15 6v6" /> <path d="M2 12h19.6" /> <path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3" /> <circle cx="7" cy="18" r="2" /> <path d="M9 18h5" /> <circle cx="16" cy="18" r="2" /></symbol><symbol id="i-utensils" viewBox="0 0 24 24"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" /> <path d="M7 2v20" /> <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" /></symbol><symbol id="i-graduation-cap" viewBox="0 0 24 24"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" /> <path d="M22 10v6" /> <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" /></symbol><symbol id="i-heart-pulse" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /> <path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27" /></symbol><symbol id="i-pill" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" /> <path d="m8.5 8.5 7 7" /></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /></symbol><symbol id="i-tv" viewBox="0 0 24 24"><rect width="20" height="15" x="2" y="7" rx="2" ry="2" /> <polyline points="17 2 12 7 7 2" /></symbol><symbol id="i-baby" viewBox="0 0 24 24"><path d="M9 12h.01" /> <path d="M15 12h.01" /> <path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5" /> <path d="M19 6.3a9 9 0 0 1 1.8 3.9 2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5c-.8 0-1.5-.4-1.5-1" /></symbol><symbol id="i-shirt" viewBox="0 0 24 24"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z" /></symbol><symbol id="i-wallet" viewBox="0 0 24 24"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" /> <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" /></symbol><symbol id="i-piggy-bank" viewBox="0 0 24 24"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2V5z" /> <path d="M2 9v1c0 1.1.9 2 2 2h1" /> <path d="M16 11h.01" /></symbol><symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></symbol><symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /> <path d="M12 2v2" /> <path d="M12 20v2" /> <path d="m4.93 4.93 1.41 1.41" /> <path d="m17.66 17.66 1.41 1.41" /> <path d="M2 12h2" /> <path d="M20 12h2" /> <path d="m6.34 17.66-1.41 1.41" /> <path d="m19.07 4.93-1.41 1.41" /></symbol><symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /></symbol><symbol id="i-landmark" viewBox="0 0 24 24"><line x1="3" x2="21" y1="22" y2="22" /> <line x1="6" x2="6" y1="18" y2="11" /> <line x1="10" x2="10" y1="18" y2="11" /> <line x1="14" x2="14" y1="18" y2="11" /> <line x1="18" x2="18" y1="18" y2="11" /> <polygon points="12 2 20 7 4 7" /></symbol><symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /> <circle cx="12" cy="12" r="6" /> <circle cx="12" cy="12" r="2" /></symbol><symbol id="i-trash-2" viewBox="0 0 24 24"><path d="M3 6h18" /> <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /> <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /> <line x1="10" x2="10" y1="11" y2="17" /> <line x1="14" x2="14" y1="11" y2="17" /></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14" /> <path d="M12 5v14" /></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></symbol></svg>
+
+<div id="splash-screen" role="status" aria-label="Loading">
   <div class="splash-content">
     <div class="splash-logo">Budget<span>ly</span></div>
     <div class="splash-loader"></div>
@@ -340,509 +176,488 @@
   </div>
 </div>
 
-  <!-- Sidebar Menu -->
-  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleMenu()"></div>
-  <div class="sidebar" id="sidebar">
-    <div class="sb-header">
-      <div class="sb-title">Tools & Options</div>
-    </div>
-    <ul class="sb-menu">
-      <ul class="sb-menu">
-      <li class="theme-switch">
-        <span>Dark Mode</span>
-        <label class="switch">
-          <input type="checkbox" id="theme-toggle" onclick="toggleTheme()">
-          <span class="slider"></span>
-        </label>
-      </li>
-      <li onclick="openModal('fuel-modal')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 22v-8p2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v8"/><path d="M11 10V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v4"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"/></svg>
-        Fuel Calculator
-      </li>
-      <li onclick="openModal('emi-modal')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
-        EMI Calculator
-      </li>
-      <li onclick="openModal('savings-modal')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-        Set Savings Goal
-      </li>
-      <li class="danger" onclick="clearAllData()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-        Clear All Data
-      </li>
-    </ul>
-  </div>
+<!-- Sidebar -->
+<div class="overlay" id="sidebar-overlay" onclick="toggleMenu()"></div>
+<nav class="sidebar" id="sidebar" aria-label="Tools and options">
+  <div class="sb-header">Tools &amp; Options</div>
+  <ul class="sb-menu">
+    <li><button onclick="toggleTheme()"><span class="ico"><svg class="ic" id="theme-ic"><use href="#i-moon"/></svg></span><span id="theme-label">Dark mode</span></button></li>
+    <li><button onclick="toggleEditQuick()"><span class="ico"><svg class="ic"><use href="#i-pencil"/></svg></span>Edit essential cards</button></li>
+    <li><button onclick="openModal('fuel-modal')"><span class="ico"><svg class="ic"><use href="#i-fuel"/></svg></span>Fuel Calculator</button></li>
+    <li><button onclick="openModal('emi-modal')"><span class="ico"><svg class="ic"><use href="#i-landmark"/></svg></span>EMI Calculator</button></li>
+    <li><button onclick="openModal('savings-modal')"><span class="ico"><svg class="ic"><use href="#i-target"/></svg></span>Set Savings Goal</button></li>
+    <li><button class="danger" onclick="clearAllData()"><span class="ico"><svg class="ic"><use href="#i-trash-2"/></svg></span>Clear All Data</button></li>
+  </ul>
+</nav>
 
-  <!-- Savings Goal Modal -->
-  <div class="modal-overlay" id="savings-modal">
-    <div class="modal-box">
-      <div class="modal-header">
-        <div class="modal-title">Set Savings Goal</div>
-        <button class="close-modal" onclick="closeModal('savings-modal')">&times;</button>
+<!-- Essential card sheet -->
+<div class="modal-overlay" id="quick-modal" role="dialog" aria-modal="true" aria-labelledby="q-title">
+  <div class="modal-box">
+    <div class="modal-header"><div class="modal-title" id="q-title">Essential</div><button class="close-modal" aria-label="Close" onclick="closeModal('quick-modal')">&times;</button></div>
+    <div class="modal-form">
+      <div class="meta-row" id="q-meta">
+        <div class="fg"><label class="fl" for="q-name">Name</label><input id="q-name" maxlength="30" placeholder="e.g. Rent"/></div>
+        <div class="fg"><span class="fl">Icon</span><div class="picker" id="q-picker" role="radiogroup" aria-label="Icon"></div></div>
       </div>
-      <div class="add-form" style="border:none; padding:0;">
-        <div class="fg">
-          <div class="fl">Goal Name (e.g. New Phone)</div>
-          <input type="text" id="goal-name" placeholder="Enter name...">
-        </div>
-        <div class="fg">
-          <div class="fl">Target Amount (Rs)</div>
-          <input type="number" id="goal-target" placeholder="Enter target...">
-        </div>
-        <button class="btn btn-income" style="margin-top: 8px;" onclick="saveSavingsGoal()">Set Goal</button>
-        <button class="btn btn-expense" style="background:var(--red); margin-top: 4px;" onclick="removeSavingsGoal()">Remove Current Goal</button>
-      </div>
+      <div class="fg"><label class="fl" for="q-amt">Amount (Rs.)</label><input type="number" id="q-amt" inputmode="numeric" min="1" placeholder="0"/></div>
+      <button class="btn btn-income" id="q-primary" onclick="quickPrimary()">Add expense</button>
+      <button class="btn btn-danger" id="q-del" onclick="quickDelete()">Delete card</button>
     </div>
   </div>
+</div>
 
-  <!-- Fuel Calculator Modal -->
-  <div class="modal-overlay" id="fuel-modal">
-    <div class="modal-box">
-      <div class="modal-header">
-        <div class="modal-title">Monthly Fuel Calculator</div>
-        <button class="close-modal" onclick="closeModal('fuel-modal')">&times;</button>
+<!-- Savings -->
+<div class="modal-overlay" id="savings-modal" role="dialog" aria-modal="true" aria-labelledby="sv-title">
+  <div class="modal-box">
+    <div class="modal-header"><div class="modal-title" id="sv-title">Set Savings Goal</div><button class="close-modal" aria-label="Close" onclick="closeModal('savings-modal')">&times;</button></div>
+    <div class="modal-form">
+      <div class="fg"><label class="fl" for="goal-name">Goal name (e.g. New Phone)</label><input type="text" id="goal-name" placeholder="Enter name…"/></div>
+      <div class="fg"><label class="fl" for="goal-target">Target amount (Rs.)</label><input type="number" id="goal-target" inputmode="numeric" placeholder="Enter target…"/></div>
+      <div class="fl">Any expense whose note contains "saving" or "save" counts toward the goal (all months).</div>
+      <button class="btn btn-income" onclick="saveSavingsGoal()">Set Goal</button>
+      <button class="btn btn-danger" onclick="removeSavingsGoal()">Remove Current Goal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Fuel -->
+<div class="modal-overlay" id="fuel-modal" role="dialog" aria-modal="true" aria-labelledby="fu-title">
+  <div class="modal-box">
+    <div class="modal-header"><div class="modal-title" id="fu-title">Monthly Fuel Calculator</div><button class="close-modal" aria-label="Close" onclick="closeModal('fuel-modal')">&times;</button></div>
+    <div class="modal-form">
+      <div class="fg"><label class="fl" for="calc-mileage">Mileage (km per liter)</label><input type="number" id="calc-mileage" inputmode="decimal" placeholder="e.g. 15"/></div>
+      <div class="row2">
+        <div class="fg"><label class="fl" for="calc-price">Fuel price (Rs/L)</label><input type="number" id="calc-price" inputmode="decimal" placeholder="e.g. 280"/></div>
+        <div class="fg"><label class="fl" for="calc-dist">Daily travel (km)</label><input type="number" id="calc-dist" inputmode="decimal" placeholder="e.g. 30"/></div>
       </div>
-      <div class="add-form" style="border:none; padding:0;">
-        <div class="fg">
-          <div class="fl">Vehicle Mileage (km per liter)</div>
-          <input type="number" id="calc-mileage" placeholder="e.g. 15">
-        </div>
-        <div class="row2">
-          <div class="fg">
-            <div class="fl">Fuel Price (Rs/L)</div>
-            <input type="number" id="calc-price" placeholder="e.g. 280">
-          </div>
-          <div class="fg">
-            <div class="fl">Daily Travel (km)</div>
-            <input type="number" id="calc-dist" placeholder="e.g. 30">
-          </div>
-        </div>
-        <div class="fg">
-          <div class="fl">Days per month</div>
-          <input type="number" id="calc-days" value="30">
-        </div>
-        <button class="btn btn-expense" style="margin-top: 8px;" onclick="calculateFuel()">Calculate</button>
-        
-        <div class="result-box" id="fuel-result-box">
-          <div class="fl">Estimated Monthly Fuel Cost</div>
-          <div class="result-val" id="fuel-result-val">Rs.0</div>
-          <button class="btn btn-expense" style="width:100%; margin-top:12px; background:var(--red);" onclick="addCalculatedExpense('Fuel Expense', window.lastFuelCalc, 'fuel-modal')">
-            + Add to Expenses
-          </button>
-        </div>
+      <div class="fg"><label class="fl" for="calc-days">Days per month</label><input type="number" id="calc-days" value="30"/></div>
+      <button class="btn btn-expense" onclick="calculateFuel()">Calculate</button>
+      <div class="result-box" id="fuel-result-box">
+        <div class="fl">Estimated monthly fuel cost</div>
+        <div class="result-val" id="fuel-result-val">Rs.0</div>
+        <button class="btn btn-danger" onclick="addCalculatedExpense('Fuel', window.lastFuelCalc, 'fuel-modal')">+ Add to Expenses</button>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- EMI Calculator Modal -->
-  <div class="modal-overlay" id="emi-modal">
-    <div class="modal-box">
-      <div class="modal-header">
-        <div class="modal-title">EMI / Loan Calculator</div>
-        <button class="close-modal" onclick="closeModal('emi-modal')">&times;</button>
+<!-- EMI -->
+<div class="modal-overlay" id="emi-modal" role="dialog" aria-modal="true" aria-labelledby="em-title">
+  <div class="modal-box">
+    <div class="modal-header"><div class="modal-title" id="em-title">EMI / Loan Calculator</div><button class="close-modal" aria-label="Close" onclick="closeModal('emi-modal')">&times;</button></div>
+    <div class="modal-form">
+      <div class="fg"><label class="fl" for="calc-loan">Loan amount (Rs.)</label><input type="number" id="calc-loan" inputmode="numeric" placeholder="e.g. 500000"/></div>
+      <div class="row2">
+        <div class="fg"><label class="fl" for="calc-rate">Interest rate (% / yr)</label><input type="number" id="calc-rate" inputmode="decimal" placeholder="e.g. 12"/></div>
+        <div class="fg"><label class="fl" for="calc-months">Tenure (months)</label><input type="number" id="calc-months" inputmode="numeric" placeholder="e.g. 24"/></div>
       </div>
-      <div class="add-form" style="border:none; padding:0;">
-        <div class="fg">
-          <div class="fl">Principal Loan Amount (Rs)</div>
-          <input type="number" id="calc-loan" placeholder="e.g. 500000">
-        </div>
-        <div class="row2">
-          <div class="fg">
-            <div class="fl">Interest Rate (%)</div>
-            <input type="number" id="calc-rate" placeholder="e.g. 12">
-          </div>
-          <div class="fg">
-            <div class="fl">Tenure (Months)</div>
-            <input type="number" id="calc-months" placeholder="e.g. 24">
-          </div>
-        </div>
-        <button class="btn btn-expense" style="margin-top: 8px;" onclick="calculateEMI()">Calculate</button>
-        
-        <div class="result-box" id="emi-result-box">
-          <div class="fl">Monthly EMI</div>
-          <div class="result-val" id="emi-result-val">Rs.0</div>
-          <button class="btn btn-expense" style="width:100%; margin-top:12px; background:var(--red);" onclick="addCalculatedExpense('Monthly Loan EMI', window.lastEmiCalc, 'emi-modal')">
-            + Add to Expenses
-          </button>
-        </div>
+      <button class="btn btn-expense" onclick="calculateEMI()">Calculate</button>
+      <div class="result-box" id="emi-result-box">
+        <div class="fl">Monthly EMI</div>
+        <div class="result-val" id="emi-result-val">Rs.0</div>
+        <button class="btn btn-danger" onclick="addCalculatedExpense('Loan EMI', window.lastEmiCalc, 'emi-modal')">+ Add to Expenses</button>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- App UI -->
-  <div class="header">
+<!-- App -->
+<div class="app">
+  <header class="header">
     <div class="header-left">
-      <button class="menu-btn" onclick="toggleMenu()">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+      <button class="icon-btn" aria-label="Open menu" onclick="toggleMenu()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
-      <div>
-        <div class="brand-name">Budget<span>ly</span></div>
-        <div class="brand-by">by BytesStack.net</div>
-      </div>
+      <div><div class="brand-name">Budget<span>ly</span></div><div class="brand-by">by BytesStack.net</div></div>
     </div>
-    <select class="month-badge" id="month-badge" onchange="changeMonth()"></select>
-  </div>
+    <select class="month-badge" id="month-badge" aria-label="Select month" onchange="changeMonth()"></select>
+  </header>
 
-  <div class="content">
-    <div class="balance-card">
+  <main class="content">
+    <section class="balance-card" aria-live="polite">
       <div class="bal-label" id="bal-label">Remaining balance</div>
       <div class="bal-amount ok" id="bal-amount">Rs.0</div>
-      <div class="bar-wrap"><div class="bar-fill" id="bar-fill" style="width:0%;background:#0f6e56"></div></div>
-      <div class="bal-sub">
-        <span>Income <b id="sub-income">Rs.0</b></span>
-        <span>Spent <span class="spent-val" id="sub-spent">Rs.0</span></span>
-      </div>
-    </div>
+      <div class="bar-wrap"><div class="bar-fill" id="bar-fill" style="width:0%"></div></div>
+      <div class="bar-pct" id="bar-pct">0% of income spent</div>
+      <div class="bal-sub"><span>Income <b id="sub-income">Rs.0</b></span><span>Spent <b id="sub-spent" style="color:var(--red)">Rs.0</b></span></div>
+    </section>
 
-    <!-- Savings Goal Card -->
-    <div class="savings-card" id="savings-card-ui">
-      <div class="savings-header">
-        <span id="savings-name-label">Savings Goal</span>
-        <span id="savings-pct-label">0%</span>
-      </div>
-      <div class="savings-bar-wrap">
-        <div class="savings-bar-fill" id="savings-bar-fill"></div>
-      </div>
-      <div class="savings-status" id="savings-status-label">Rs.0 / Rs.0</div>
-    </div>
+    <section class="savings-card" id="savings-card-ui">
+      <div class="savings-header"><span id="savings-name-label">Savings Goal</span><span id="savings-pct-label">0%</span></div>
+      <div class="savings-bar-wrap"><div class="savings-bar-fill" id="savings-bar-fill"></div></div>
+      <div class="savings-status" id="savings-status-label"></div>
+    </section>
 
     <div class="totals-row">
       <div class="total-box"><div class="tl">Total income</div><div class="tv green" id="total-income">Rs.0</div></div>
       <div class="total-box"><div class="tl">Total spent</div><div class="tv red" id="total-spent">Rs.0</div></div>
     </div>
 
-    <div class="add-form">
+    <section>
+      <div class="sec-head"><div class="sec-label">Essential expenses</div><button class="link-btn" id="edit-quick-btn" onclick="toggleEditQuick()">Edit</button></div>
+      <div class="qgrid" id="qgrid"></div>
+    </section>
+
+    <section class="add-form">
       <div class="form-title">Add entry</div>
       <div class="row2">
-        <div class="fg">
-          <div class="fl">Source / Note</div>
-          <input type="text" id="f-note" placeholder="e.g. Salary, Rent…" autocomplete="off"/>
-        </div>
-        <div class="fg">
-          <div class="fl">Amount (Rs.)</div>
-          <input type="number" id="f-amt" placeholder="0" min="1" inputmode="numeric"/>
-        </div>
+        <div class="fg"><label class="fl" for="f-note">Source / Note</label><input type="text" id="f-note" placeholder="e.g. Salary, Rent…" autocomplete="off" maxlength="60"/></div>
+        <div class="fg"><label class="fl" for="f-amt">Amount (Rs.)</label><input type="number" id="f-amt" placeholder="0" min="1" inputmode="numeric"/></div>
       </div>
-      <div class="fg">
-        <div class="fl">Date</div>
-        <input type="date" id="f-date"/>
-      </div>
+      <div class="fg"><label class="fl" for="f-date">Date</label><input type="date" id="f-date"/></div>
       <div class="btn-row">
-        <button class="btn btn-income"  onclick="addEntry('income')">+ Add income</button>
+        <button class="btn btn-income" onclick="addEntry('income')">+ Add income</button>
         <button class="btn btn-expense" onclick="addEntry('expense')">− Expense</button>
       </div>
-    </div>
+    </section>
 
-    <div><div class="sec-label" id="inc-label">INCOME SOURCES</div><div id="inc-list"></div></div>
-    <div><div class="sec-label" id="exp-label">EXPENSES</div><div id="exp-list"></div></div>
+    <section><div class="sec-label" style="margin-bottom:8px">Income sources</div><div id="inc-list"></div></section>
+    <section><div class="sec-label" style="margin-bottom:8px">Expenses</div><div id="exp-list"></div></section>
 
     <button class="export-btn" onclick="exportPDF()">Download PDF Receipt</button>
-    <button class="export-btn" id="notify-btn" style="background: var(--text);" onclick="toggleNotifications()">Enable Hourly Reminders</button>
-    <div class="footer">Budgetly &copy; 2026 by: mhrbhatti</div>
-  </div>
+    <button class="export-btn alt" id="notify-btn" onclick="toggleNotifications()">Enable Reminders</button>
+    <div class="footer">Budgetly &copy; 2026 by mhrbhatti · BytesStack.net</div>
+  </main>
+</div>
 
-  <div id="pdf-receipt"></div>
-  <div class="toast-wrap"><div class="toast" id="toast"></div></div>
+<div id="pdf-receipt"></div>
+<div class="toast-wrap"><div class="toast" id="toast" role="status"></div></div>
 
-  <script>
-    // Add this to your variable declarations at the top
-    const themeToggle = document.getElementById('theme-toggle');
+<script>
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => (n < 0 ? '−' : '') + 'Rs.' + Math.round(Math.abs(n)).toLocaleString();
+const ICONS = ['house','shopping-cart','zap','flame','droplet','wifi','fuel','smartphone','car','bus','utensils','graduation-cap','heart-pulse','pill','shield','tv','baby','shirt','wallet','piggy-bank'];
+const iconName = n => ICONS.includes(n) ? n : 'wallet';
+const ic = n => `<svg class="ic" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+let qIcon = 'wallet';
+const buzz = () => { try { navigator.vibrate && navigator.vibrate(15); } catch (e) {} };
 
-    function toggleTheme() {
-      if (document.body.classList.contains('dark-mode')) {
-        document.body.classList.remove('dark-mode');
-        localStorage.setItem('budgetly_theme', 'light');
-      } else {
-        document.body.classList.add('dark-mode');
-        localStorage.setItem('budgetly_theme', 'dark');
-      }
-    }
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { toast('Could not save — storage is full or blocked'); } }
+};
 
-    function initTheme() {
-      const savedTheme = localStorage.getItem('budgetly_theme');
-      if (savedTheme === 'dark') {
-        document.body.classList.add('dark-mode');
-        if(themeToggle) themeToggle.checked = true;
-      }
-    }
+const DEFAULT_QUICK = [
+  {id:'q1', icon:'house', name:'Rent', amt:0},
+  {id:'q2', icon:'shopping-cart', name:'Groceries', amt:0},
+  {id:'q3', icon:'zap', name:'Electricity', amt:0},
+  {id:'q4', icon:'flame', name:'Gas', amt:0},
+  {id:'q5', icon:'droplet', name:'Water', amt:0},
+  {id:'q6', icon:'wifi', name:'Internet', amt:0},
+  {id:'q7', icon:'fuel', name:'Fuel', amt:0},
+  {id:'q8', icon:'smartphone', name:'Mobile', amt:0}
+];
 
-    // Call this at the very bottom of your script
-    initTheme();
-    let entries = JSON.parse(localStorage.getItem('budgetly_entries')) || [];
-    let savingsGoal = JSON.parse(localStorage.getItem('budgetly_savings')) || null;
-    let nextId  = entries.length > 0 ? Math.max(...entries.map(e => e.id)) + 1 : 1;
+let entries = store.get('budgetly_entries', []); if (!Array.isArray(entries)) entries = [];
+let savingsGoal = store.get('budgetly_savings', null);
+let quick = store.get('budgetly_quick', null); if (!Array.isArray(quick)) quick = DEFAULT_QUICK;
+let nextId = Math.max(0, ...entries.map(e => e.id || 0)) + 1;
+let currentMonthStr = todayStr().slice(0, 7);
+let editMode = false, qs = null;
 
-    const now   = new Date();
-    const today = now.toISOString().slice(0, 10);
-    let currentMonthStr = today.slice(0, 7); 
+$('f-date').value = todayStr();
 
-    document.getElementById('f-date').value = today;
-
-    /* ── Utilities ── */
-    function fmt(n) { return 'Rs.' + Math.round(Math.abs(n)).toLocaleString(); }
-
-    function toast(msg) {
-      const t = document.getElementById('toast');
-      t.textContent = msg; t.classList.add('show');
-      clearTimeout(t._tid);
-      t._tid = setTimeout(() => t.classList.remove('show'), 2000);
-    }
-
-    function saveToStorage() { 
-      localStorage.setItem('budgetly_entries', JSON.stringify(entries)); 
-      localStorage.setItem('budgetly_savings', JSON.stringify(savingsGoal));
-    }
-
-    /* ── Side Menu & Modals ── */
-    function toggleMenu() {
-      document.getElementById('sidebar').classList.toggle('active');
-      document.getElementById('sidebar-overlay').classList.toggle('active');
-    }
-
-    function openModal(id) {
-      toggleMenu();
-      document.getElementById(id).classList.add('active');
-    }
-
-    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-
-    /* ── Savings Goals Logic ── */
-    function saveSavingsGoal() {
-      const name = document.getElementById('goal-name').value.trim();
-      const target = parseFloat(document.getElementById('goal-target').value);
-      if (!name || !target) { toast("Please fill both goal fields"); return; }
-      
-      savingsGoal = { name, target };
-      saveToStorage();
-      closeModal('savings-modal');
-      refresh();
-      toast("Savings goal set!");
-    }
-
-    function removeSavingsGoal() {
-      savingsGoal = null;
-      saveToStorage();
-      closeModal('savings-modal');
-      refresh();
-      toast("Savings goal removed");
-    }
-
-    /* ── Calculators ── */
-    function calculateFuel() {
-      const mileage = parseFloat(document.getElementById('calc-mileage').value);
-      const price   = parseFloat(document.getElementById('calc-price').value);
-      const dist    = parseFloat(document.getElementById('calc-dist').value);
-      const days    = parseFloat(document.getElementById('calc-days').value) || 30;
-      if (!mileage || !price || !dist) { toast('Please fill all fuel fields'); return; }
-      const monthlyCost = Math.round((dist / mileage) * price * days);
-      window.lastFuelCalc = monthlyCost;
-      document.getElementById('fuel-result-val').textContent = fmt(monthlyCost);
-      document.getElementById('fuel-result-box').style.display = 'block';
-    }
-
-    function calculateEMI() {
-      const p = parseFloat(document.getElementById('calc-loan').value);
-      const rate = parseFloat(document.getElementById('calc-rate').value);
-      const n = parseFloat(document.getElementById('calc-months').value);
-      if (!p || !rate || !n) { toast('Please fill all EMI fields'); return; }
-      const r = rate / 12 / 100;
-      const emi = Math.round(p * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1));
-      window.lastEmiCalc = emi;
-      document.getElementById('emi-result-val').textContent = fmt(emi);
-      document.getElementById('emi-result-box').style.display = 'block';
-    }
-
-    function addCalculatedExpense(note, amount, modalId) {
-      if (!amount) return;
-      entries.unshift({ id: nextId++, type: 'expense', note: note, amt: amount, date: today });
-      saveToStorage();
-      closeModal(modalId);
-      refresh();
-      toast(note + ' added!');
-    }
-
-    function clearAllData() {
-      if(confirm("Are you sure?")) {
-        entries = [];
-        savingsGoal = null;
-        saveToStorage();
-        toggleMenu();
-        refresh();
-      }
-    }
-
-    /* ── Main Data Logic ── */
-    function addEntry(type) {
-      const note = document.getElementById('f-note').value.trim();
-      const amt  = parseFloat(document.getElementById('f-amt').value);
-      const date = document.getElementById('f-date').value || today;
-      if (!note || !amt || amt<=0) { toast('Invalid entry'); return; }
-      entries.unshift({ id: nextId++, type, note, amt, date });
-      document.getElementById('f-note').value = '';
-      document.getElementById('f-amt').value  = '';
-      saveToStorage();
-      refresh();
-    }
-
-    function del(id) {
-      entries = entries.filter(e => e.id !== id);
-      saveToStorage();
-      refresh();
-    }
-
-    function updateMonthDropdown() {
-      const selector = document.getElementById('month-badge');
-      const months = new Set(entries.map(e => e.date.slice(0, 7)));
-      months.add(today.slice(0, 7)); 
-      selector.innerHTML = Array.from(months).sort().reverse().map(m => {
-        const [yyyy, mm] = m.split('-');
-        return `<option value="${m}" ${m === currentMonthStr ? 'selected' : ''}>${m}</option>`;
-      }).join('');
-    }
-
-    function changeMonth() { currentMonthStr = document.getElementById('month-badge').value; refresh(); }
-
-    /* ── Notifications (Shortened for space) ── */
-    function toggleNotifications() {
-        if (!("Notification" in window)) return;
-        Notification.requestPermission().then(p => { if(p === "granted") toast("Reminders enabled"); });
-    }
-
-   function refresh() {
-      updateMonthDropdown();
-      const activeEntries = entries.filter(e => e.date.startsWith(currentMonthStr));
-      const incomes  = activeEntries.filter(e => e.type === 'income');
-      const expenses = activeEntries.filter(e => e.type === 'expense');
-      
-      const totalIn  = incomes.reduce((s,e)  => s + e.amt, 0);
-      const totalEx  = expenses.reduce((s,e) => s + e.amt, 0);
-      const remain   = totalIn - totalEx;
-      
-      // Calculate specific Savings Amount based on Note keywords
-      // This looks for "saving", "save", or "savings" in the entry note
-      const savingKeywords = ['saving', 'save', 'savings', 'Saving Box'];
-      const totalSaved = activeEntries.reduce((sum, e) => {
-        const noteLower = e.note.toLowerCase().trim();
-        if (savingKeywords.includes(noteLower)) {
-          return sum + e.amt;
-        }
-        return sum;
-      }, 0);
-
-      const balEl = document.getElementById('bal-amount');
-      balEl.textContent = fmt(remain);
-      
-      const pctBudget = totalIn > 0 ? Math.min(Math.round(totalEx / totalIn * 100), 100) : 0;
-      const bar = document.getElementById('bar-fill');
-      bar.style.width = pctBudget + '%';
-
-      document.getElementById('sub-income').textContent = fmt(totalIn);
-      document.getElementById('sub-spent').textContent  = fmt(totalEx);
-      document.getElementById('total-income').textContent = fmt(totalIn);
-      document.getElementById('total-spent').textContent  = fmt(totalEx);
-
-      // Refresh Savings UI
-      const savingsUI = document.getElementById('savings-card-ui');
-      if (savingsGoal) {
-        savingsUI.style.display = 'flex';
-        document.getElementById('savings-name-label').textContent = savingsGoal.name;
-        
-        // Calculate progress based on the specific "Saving" notes found
-        const pctGoal = Math.min(100, Math.round((totalSaved / savingsGoal.target) * 100));
-        
-        document.getElementById('savings-bar-fill').style.width = pctGoal + '%';
-        document.getElementById('savings-pct-label').textContent = pctGoal + '%';
-        document.getElementById('savings-status-label').textContent = fmt(totalSaved) + " / " + fmt(savingsGoal.target);
-      } else {
-        savingsUI.style.display = 'none';
-      }
-
-      renderList(incomes, 'inc-list', 'income');
-      renderList(expenses, 'exp-list', 'expense');
-    }
-
-    function renderList(items, containerId, type) {
-      const el = document.getElementById(containerId);
-      if (!items.length) { el.innerHTML = '<div class="empty">None this month</div>'; return; }
-      el.innerHTML = items.map(e => `
-        <div class="list-item" style="background:#fff; margin-bottom:5px; border-radius:8px;">
-          <div class="li-left"><div class="li-dot ${type}"></div><div class="li-info">${e.note}</div></div>
-          <div class="li-right"><span>${fmt(e.amt)}</span><button class="del-btn" onclick="del(${e.id})">×</button></div>
-        </div>`).join('');
-    }
-window.addEventListener('load', () => {
-      const splash = document.getElementById('splash-screen');
-      
-      // We give it a small delay so the user actually sees the branding
-      setTimeout(() => {
-        splash.classList.add('splash-hidden');
-      }, 1000); 
-    });
-   function exportPDF() {
-  // 1. Get data for the currently selected month
-  const activeEntries = entries.filter(e => e.date.startsWith(currentMonthStr));
-  const incomes  = activeEntries.filter(e => e.type === 'income');
-  const expenses = activeEntries.filter(e => e.type === 'expense');
-  const totalIn  = incomes.reduce((s,e)  => s + e.amt, 0);
-  const totalEx  = expenses.reduce((s,e) => s + e.amt, 0);
-  const remain   = totalIn - totalEx;
-  const balColor = remain < 0 ? '#a32d2d' : '#0f6e56';
-
-  const [yyyy, mm] = currentMonthStr.split('-');
-  const monthObj = new Date(yyyy, mm - 1);
-  const monthStr  = monthObj.toLocaleString('default', { month: 'long', year: 'numeric' });
-  const printedOn = new Date().toLocaleDateString('default', { day:'numeric', month:'long', year:'numeric' });
-  const receiptNo = 'BDG-' + yyyy + mm + '-' + Math.floor(1000 + Math.random() * 9000);
-
-  // Helper to build table rows
-  function buildRows(list, clsColor) {
-    if (!list.length) return `<tr><td colspan="3" style="padding:10px 0; color:#888; text-align:center;">No entries</td></tr>`;
-    return list.sort((a,b) => a.date.localeCompare(b.date)).map(e => `
-      <tr>
-        <td style="padding:8px 0; border-bottom:1px solid #eee;">${e.date}</td>
-        <td style="padding:8px 0; border-bottom:1px solid #eee;">${e.note}</td>
-        <td style="padding:8px 0; border-bottom:1px solid #eee; text-align:right; color:${clsColor}; font-weight:600;">
-          ${e.type === 'income' ? '+' : '-'} ${fmt(e.amt)}
-        </td>
-      </tr>`).join('');
+/* ── Toast (with optional action) ── */
+function toast(msg, actionLabel, fn) {
+  const t = $('toast');
+  t.textContent = msg;
+  if (actionLabel) {
+    const b = document.createElement('button');
+    b.textContent = actionLabel;
+    b.onclick = () => { t.classList.remove('show'); fn(); };
+    t.appendChild(b);
   }
+  t.classList.add('show');
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => t.classList.remove('show'), actionLabel ? 5000 : 2200);
+}
+function saveAll() {
+  store.set('budgetly_entries', entries);
+  store.set('budgetly_savings', savingsGoal);
+  store.set('budgetly_quick', quick);
+}
 
-  // 2. Build the HTML and inject it into the hidden container
-  document.getElementById('pdf-receipt').innerHTML = `
-    <div class="receipt" style="padding: 40px; font-family: serif;">
-      <div style="text-align:center; border-bottom: 2px solid #111; padding-bottom: 20px; margin-bottom: 20px;">
-        <h1 style="margin:0;">Budget<span style="color:#0f6e56">ly</span></h1>
-        <p style="font-size:12px; color:#666;">Monthly Financial Statement</p>
-        <p style="font-size:10px; color:#999;">Period: ${monthStr} | Ref: ${receiptNo}</p>
-      </div>
+/* ── Theme ── */
+function applyTheme(dark) {
+  document.body.classList.toggle('dark-mode', dark);
+  $('theme-label').textContent = dark ? 'Light mode' : 'Dark mode';
+  $('theme-ic').firstElementChild.setAttribute('href', dark ? '#i-sun' : '#i-moon');
+  document.querySelector('meta[name=theme-color]').content = dark ? '#121212' : '#0f6e56';
+}
+function toggleTheme() {
+  const dark = !document.body.classList.contains('dark-mode');
+  store.set('budgetly_theme', dark ? 'dark' : 'light');
+  applyTheme(dark);
+}
+(function initTheme() {
+  const saved = store.get('budgetly_theme', null);
+  applyTheme(saved ? saved === 'dark' : window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+})();
 
-      <div style="display:flex; justify-content:space-between; margin-bottom:30px; background:#f9f9f9; padding:15px; border-radius:8px;">
-        <div><small>Total Income</small><br><b>${fmt(totalIn)}</b></div>
-        <div><small>Total Spent</small><br><b>${fmt(totalEx)}</b></div>
-        <div><small>Final Balance</small><br><b style="color:${balColor}">${fmt(remain)}</b></div>
-      </div>
+/* ── Menu & modals ── */
+function toggleMenu() {
+  $('sidebar').classList.toggle('active');
+  $('sidebar-overlay').classList.toggle('active');
+}
+function openModal(id) {
+  if ($('sidebar').classList.contains('active')) toggleMenu();
+  if (id === 'savings-modal' && savingsGoal) { $('goal-name').value = savingsGoal.name; $('goal-target').value = savingsGoal.target; }
+  $(id).classList.add('active');
+}
+function closeModal(id) { $(id).classList.remove('active'); }
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) closeModal(o.id); }));
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  document.querySelectorAll('.modal-overlay.active').forEach(o => closeModal(o.id));
+  if ($('sidebar').classList.contains('active')) toggleMenu();
+});
 
-      <h4 style="border-bottom:1px solid #ddd; padding-bottom:5px;">Income Sources</h4>
-      <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:12px;">
-        ${buildRows(incomes, '#0f6e56')}
-      </table>
+/* ── Essential cards ── */
+function renderQuick() {
+  const paid = {};
+  entries.filter(e => e.type === 'expense' && e.date.startsWith(currentMonthStr))
+    .forEach(e => { const k = e.note.toLowerCase().trim(); paid[k] = (paid[k] || 0) + e.amt; });
+  $('qgrid').classList.toggle('editing', editMode);
+  $('edit-quick-btn').textContent = editMode ? 'Done' : 'Edit';
+  $('qgrid').innerHTML = quick.map(q => {
+    const p = paid[q.name.toLowerCase().trim()];
+    return `<button class="qcard ${p ? 'paid' : ''}" data-id="${esc(q.id)}" aria-label="${esc(q.name)}${p ? ', paid ' + fmt(p) : ''}">
+      <span class="qi">${ic(iconName(q.icon))}</span><span class="qn">${esc(q.name)}</span>
+      <span class="qa">${p ? ic('check') + ' ' + fmt(p) : (q.amt ? fmt(q.amt) : 'Tap to add')}</span></button>`;
+  }).join('') + `<button class="qcard add" data-id="new" aria-label="Add new essential card"><span class="qi">${ic('plus')}</span><span class="qn">New</span></button>`;
+}
+$('qgrid').addEventListener('click', e => {
+  const c = e.target.closest('.qcard'); if (c) openQuick(c.dataset.id);
+});
+function toggleEditQuick() {
+  if ($('sidebar').classList.contains('active')) toggleMenu();
+  editMode = !editMode; renderQuick();
+  if (editMode) toast('Tap a card to edit or delete it');
+}
+function openQuick(id) {
+  const isNew = id === 'new';
+  const q = quick.find(x => x.id === id) || {name: '', icon: 'wallet', amt: ''};
+  const mode = isNew ? 'new' : editMode ? 'edit' : 'add';
+  qs = {mode, id};
+  $('q-title').textContent = mode === 'add' ? q.name : mode === 'new' ? 'New essential card' : 'Edit essential card';
+  $('q-meta').style.display = mode === 'add' ? 'none' : 'flex';
+  $('q-name').value = q.name; qIcon = iconName(q.icon); renderPicker(); $('q-amt').value = q.amt || '';
+  $('q-primary').textContent = mode === 'add' ? 'Add expense' : 'Save card';
+  $('q-primary').className = 'btn ' + (mode === 'add' ? 'btn-expense' : 'btn-income');
+  $('q-del').style.display = mode === 'edit' ? 'block' : 'none';
+  openModal('quick-modal');
+  setTimeout(() => $(mode === 'add' ? 'q-amt' : 'q-name').focus(), 250);
+}
+function renderPicker() {
+  $('q-picker').innerHTML = ICONS.map(n => `<button type="button" class="pick ${n === qIcon ? 'sel' : ''}" data-i="${n}" role="radio" aria-checked="${n === qIcon}" aria-label="${n.replace(/-/g, ' ')}">${ic(n)}</button>`).join('');
+}
+$('q-picker').addEventListener('click', e => { const b = e.target.closest('.pick'); if (b) { qIcon = b.dataset.i; renderPicker(); } });
+function quickPrimary() {
+  const amt = parseFloat($('q-amt').value);
+  if (qs.mode === 'add') {
+    if (!(amt > 0)) { toast('Enter an amount'); return; }
+    const q = quick.find(x => x.id === qs.id);
+    q.amt = amt;
+    commit({type: 'expense', note: q.name, amt, date: todayStr()});
+    closeModal('quick-modal');
+    toast(q.name + ' added · ' + fmt(amt));
+    return;
+  }
+  const name = $('q-name').value.trim();
+  if (!name) { toast('Enter a name'); return; }
+  const icon = qIcon;
+  if (qs.mode === 'new') quick.push({id: 'q' + Date.now(), icon, name, amt: amt > 0 ? amt : 0});
+  else Object.assign(quick.find(x => x.id === qs.id), {icon, name, amt: amt > 0 ? amt : 0});
+  saveAll(); renderQuick(); closeModal('quick-modal');
+}
+function quickDelete() {
+  quick = quick.filter(x => x.id !== qs.id);
+  saveAll(); renderQuick(); closeModal('quick-modal'); toast('Card deleted');
+}
 
-      <h4 style="border-bottom:1px solid #ddd; padding-bottom:5px;">Expenses</h4>
-      <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:12px;">
-        ${buildRows(expenses, '#a32d2d')}
-      </table>
+/* ── Savings goal ── */
+function saveSavingsGoal() {
+  const name = $('goal-name').value.trim(), target = parseFloat($('goal-target').value);
+  if (!name || !(target > 0)) { toast('Please fill both goal fields'); return; }
+  savingsGoal = {name, target}; saveAll(); closeModal('savings-modal'); refresh(); toast('Savings goal set!');
+}
+function removeSavingsGoal() {
+  savingsGoal = null; saveAll(); closeModal('savings-modal'); refresh(); toast('Savings goal removed');
+}
 
-      <div style="text-align:center; margin-top:40px; font-size:10px; color:#999; border-top:1px solid #eee; padding-top:10px;">
-        Generated on ${printedOn} via Budgetly — BytesStack.net
-      </div>
-    </div>`;
+/* ── Calculators ── */
+function calculateFuel() {
+  const mileage = parseFloat($('calc-mileage').value), price = parseFloat($('calc-price').value),
+        dist = parseFloat($('calc-dist').value), days = parseFloat($('calc-days').value) || 30;
+  if (!(mileage > 0) || !(price > 0) || !(dist > 0)) { toast('Please fill all fuel fields'); return; }
+  window.lastFuelCalc = Math.round((dist / mileage) * price * days);
+  $('fuel-result-val').textContent = fmt(window.lastFuelCalc);
+  $('fuel-result-box').style.display = 'block';
+}
+function calculateEMI() {
+  const p = parseFloat($('calc-loan').value), rate = parseFloat($('calc-rate').value), n = parseFloat($('calc-months').value);
+  if (!(p > 0) || !(rate >= 0) || !(n > 0)) { toast('Please fill all EMI fields'); return; }
+  const r = rate / 12 / 100;
+  window.lastEmiCalc = Math.round(r === 0 ? p / n : p * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1));
+  $('emi-result-val').textContent = fmt(window.lastEmiCalc);
+  $('emi-result-box').style.display = 'block';
+}
+function addCalculatedExpense(note, amount, modalId) {
+  if (!amount) return;
+  commit({type: 'expense', note, amt: amount, date: todayStr()});
+  closeModal(modalId); toast(note + ' added!');
+}
 
-  // 3. Trigger the Print/Save PDF dialog
+/* ── Data ── */
+function commit(entry) {
+  entries.unshift({id: nextId++, ...entry});
+  currentMonthStr = entry.date.slice(0, 7);
+  saveAll(); refresh(); buzz();
+}
+function addEntry(type) {
+  const note = $('f-note').value.trim(), amt = parseFloat($('f-amt').value), date = $('f-date').value || todayStr();
+  if (!note) { toast('Add a note first'); $('f-note').focus(); return; }
+  if (!(amt > 0)) { toast('Enter an amount above 0'); $('f-amt').focus(); return; }
+  commit({type, note, amt, date});
+  $('f-note').value = ''; $('f-amt').value = '';
+  toast((type === 'income' ? 'Income' : 'Expense') + ' added');
+}
+function del(id) {
+  const i = entries.findIndex(e => e.id === id); if (i < 0) return;
+  const [removed] = entries.splice(i, 1);
+  saveAll(); refresh(); buzz();
+  toast('Entry deleted', 'Undo', () => { entries.splice(i, 0, removed); saveAll(); refresh(); });
+}
+function clearAllData() {
+  if ($('sidebar').classList.contains('active')) toggleMenu();
+  if (!confirm('Delete ALL entries and your savings goal? This cannot be undone.')) return;
+  entries = []; savingsGoal = null; saveAll(); refresh(); toast('All data cleared');
+}
+
+/* ── Month ── */
+function updateMonthDropdown() {
+  const months = new Set(entries.map(e => e.date.slice(0, 7)));
+  months.add(todayStr().slice(0, 7)); months.add(currentMonthStr);
+  $('month-badge').innerHTML = [...months].sort().reverse().map(m => {
+    const [y, mo] = m.split('-');
+    const label = new Date(y, mo - 1).toLocaleString('en', {month: 'short', year: 'numeric'});
+    return `<option value="${m}" ${m === currentMonthStr ? 'selected' : ''}>${label}</option>`;
+  }).join('');
+}
+function changeMonth() { currentMonthStr = $('month-badge').value; refresh(); }
+
+/* ── Reminders (works while the app is open) ── */
+let remTimer = null;
+function setReminders(on) {
+  clearInterval(remTimer);
+  if (on) remTimer = setInterval(() => {
+    if (Notification.permission === 'granted') new Notification('Budgetly', {body: "Have you logged today's expenses?"});
+  }, 3600000);
+  $('notify-btn').textContent = on ? 'Disable Reminders' : 'Enable Reminders';
+  store.set('budgetly_rem', on);
+}
+function toggleNotifications() {
+  if (!('Notification' in window)) { toast('Notifications are not supported on this device'); return; }
+  if (remTimer) { setReminders(false); toast('Reminders off'); return; }
+  Notification.requestPermission().then(p => {
+    if (p === 'granted') { setReminders(true); toast('Hourly reminders on (while app is open)'); }
+    else toast('Notification permission denied');
+  });
+}
+if ('Notification' in window && store.get('budgetly_rem', false) && Notification.permission === 'granted') setReminders(true);
+
+/* ── Render ── */
+const dateLabel = d => new Date(d + 'T00:00').toLocaleDateString('en', {day: 'numeric', month: 'short'});
+function refresh() {
+  updateMonthDropdown();
+  const active = entries.filter(e => e.date.startsWith(currentMonthStr))
+    .sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+  const incomes = active.filter(e => e.type === 'income'), expenses = active.filter(e => e.type === 'expense');
+  const totalIn = incomes.reduce((s, e) => s + e.amt, 0), totalEx = expenses.reduce((s, e) => s + e.amt, 0);
+  const remain = totalIn - totalEx;
+  const pct = totalIn > 0 ? Math.round(totalEx / totalIn * 100) : (totalEx > 0 ? 100 : 0);
+  const state = remain < 0 ? 'over' : pct >= 80 ? 'low' : 'ok';
+
+  const bal = $('bal-amount');
+  bal.textContent = fmt(remain); bal.className = 'bal-amount ' + state;
+  $('bal-label').textContent = remain < 0 ? 'Over budget by' : 'Remaining balance';
+  const bar = $('bar-fill');
+  bar.style.width = Math.min(pct, 100) + '%';
+  bar.style.background = `var(--${state === 'over' ? 'red' : state === 'low' ? 'amber' : 'green'})`;
+  $('bar-pct').textContent = totalIn > 0 ? pct + '% of income spent' : 'Add income to track your budget';
+  ['sub-income', 'total-income'].forEach(i => $(i).textContent = fmt(totalIn));
+  ['sub-spent', 'total-spent'].forEach(i => $(i).textContent = fmt(totalEx));
+
+  const ui = $('savings-card-ui');
+  if (savingsGoal) {
+    const saved = entries.filter(e => e.type === 'expense' && /sav(e|ing)/i.test(e.note)).reduce((s, e) => s + e.amt, 0);
+    const g = Math.min(100, Math.round(saved / savingsGoal.target * 100));
+    ui.style.display = 'flex';
+    $('savings-name-label').innerHTML = ic('target') + ' ' + esc(savingsGoal.name);
+    $('savings-bar-fill').style.width = g + '%';
+    $('savings-pct-label').textContent = g + '%';
+    $('savings-status-label').textContent = fmt(saved) + ' / ' + fmt(savingsGoal.target);
+  } else ui.style.display = 'none';
+
+  renderList(incomes, 'inc-list', 'income');
+  renderList(expenses, 'exp-list', 'expense');
+  renderQuick();
+}
+function renderList(items, id, type) {
+  const el = $(id);
+  if (!items.length) { el.innerHTML = `<div class="list-card"><div class="empty">No ${type === 'income' ? 'income' : 'expenses'} this month</div></div>`; return; }
+  el.innerHTML = '<div class="list-card">' + items.map(e => `
+    <div class="list-item">
+      <div class="li-left"><div class="li-dot ${type}"></div>
+        <div class="li-info"><div class="li-note">${esc(e.note)}</div><div class="li-date">${dateLabel(e.date)}</div></div></div>
+      <div class="li-right"><span class="li-amt ${type}">${type === 'income' ? '+' : '−'}${fmt(e.amt)}</span>
+        <button class="del-btn" aria-label="Delete ${esc(e.note)}" onclick="del(${e.id})">×</button></div>
+    </div>`).join('') + '</div>';
+}
+
+/* ── PDF ── */
+function exportPDF() {
+  const active = entries.filter(e => e.date.startsWith(currentMonthStr));
+  const incomes = active.filter(e => e.type === 'income'), expenses = active.filter(e => e.type === 'expense');
+  const totalIn = incomes.reduce((s, e) => s + e.amt, 0), totalEx = expenses.reduce((s, e) => s + e.amt, 0);
+  const remain = totalIn - totalEx, balColor = remain < 0 ? '#a32d2d' : '#0f6e56';
+  const [yyyy, mm] = currentMonthStr.split('-');
+  const monthStr = new Date(yyyy, mm - 1).toLocaleString('en', {month: 'long', year: 'numeric'});
+  const printedOn = new Date().toLocaleDateString('en', {day: 'numeric', month: 'long', year: 'numeric'});
+  const ref = 'BDG-' + yyyy + mm + '-' + Math.floor(1000 + Math.random() * 9000);
+  const rows = (list, color) => !list.length
+    ? '<tr><td colspan="3" style="padding:10px 0;color:#888;text-align:center">No entries</td></tr>'
+    : [...list].sort((a, b) => a.date.localeCompare(b.date)).map(e => `<tr>
+        <td style="padding:8px 0;border-bottom:1px solid #eee">${e.date}</td>
+        <td style="padding:8px 0;border-bottom:1px solid #eee">${esc(e.note)}</td>
+        <td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;color:${color};font-weight:600">${e.type === 'income' ? '+' : '-'} ${fmt(e.amt)}</td></tr>`).join('');
+  $('pdf-receipt').innerHTML = `<div style="padding:40px;font-family:Georgia,serif;max-width:560px;margin:0 auto">
+    <div style="text-align:center;border-bottom:2px solid #111;padding-bottom:20px;margin-bottom:20px">
+      <h1 style="margin:0">Budget<span style="color:#0f6e56">ly</span></h1>
+      <p style="font-size:12px;color:#666">Monthly Financial Statement</p>
+      <p style="font-size:10px;color:#999">Period: ${monthStr} | Ref: ${ref}</p></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:30px;background:#f9f9f9;padding:15px;border-radius:8px">
+      <div><small>Total Income</small><br><b>${fmt(totalIn)}</b></div>
+      <div><small>Total Spent</small><br><b>${fmt(totalEx)}</b></div>
+      <div><small>Final Balance</small><br><b style="color:${balColor}">${fmt(remain)}</b></div></div>
+    <h4 style="border-bottom:1px solid #ddd;padding-bottom:5px">Income Sources</h4>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:12px">${rows(incomes, '#0f6e56')}</table>
+    <h4 style="border-bottom:1px solid #ddd;padding-bottom:5px">Expenses</h4>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:12px">${rows(expenses, '#a32d2d')}</table>
+    <div style="text-align:center;margin-top:40px;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:10px">Generated on ${printedOn} via Budgetly — BytesStack.net</div></div>`;
   window.print();
 }
 
-    refresh();
-  </script>
+/* ── Splash ── */
+window.addEventListener('load', () => {
+  const s = $('splash-screen');
+  setTimeout(() => { s.classList.add('splash-hidden'); setTimeout(() => s.remove(), 600); }, 900);
+});
+
+refresh();
+</script>
 </body>
-</html>     
+</html>
