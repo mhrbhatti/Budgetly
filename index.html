@@ -9,6 +9,7 @@
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-title" content="Budgetly"/>
 <title>Budgetly</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230D9488'/%3E%3Cpath d='M18 40l10-10 8 8 12-14' stroke='white' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -350,6 +351,47 @@ button.setrow:active{background:var(--surface2)}
 .drow .tag.them{background:color-mix(in srgb,var(--red) 16%,transparent);color:var(--red)}
 .drow.settled{opacity:.55}
 .drow.settled .rt{text-decoration:line-through}
+
+/* Auth screens */
+#auth-screen{
+  position:fixed;inset:0;z-index:500;background:var(--bg);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px 20px calc(24px + env(safe-area-inset-bottom));
+  overflow-y:auto;
+}
+#auth-screen.show{display:flex}
+.auth-box{width:100%;max-width:380px;display:flex;flex-direction:column;gap:14px}
+.auth-logo{
+  width:64px;height:64px;border-radius:16px;background:var(--blue);color:#fff;
+  display:grid;place-items:center;font-size:28px;margin:0 auto 4px;
+}
+.auth-box h1{text-align:center;font-size:26px;font-weight:700;letter-spacing:-.5px}
+.auth-box h1 span{color:var(--blue)}
+.auth-sub{text-align:center;font-size:14px;color:var(--text2);margin-bottom:6px;line-height:1.4}
+.auth-div{
+  display:flex;align-items:center;gap:12px;color:var(--text3);font-size:12px;font-weight:500;
+}
+.auth-div::before,.auth-div::after{content:"";flex:1;height:1px;background:var(--separator)}
+.btn.google{
+  background:var(--surface);color:var(--text);border:0.5px solid var(--separator);
+  font-weight:600;gap:10px;
+}
+.btn.google:active{opacity:.8}
+.auth-err{
+  display:none;font-size:13px;color:var(--red);text-align:center;
+  background:color-mix(in srgb,var(--red) 12%,transparent);padding:10px 12px;border-radius:10px;
+}
+.auth-err.show{display:block}
+.auth-switch{text-align:center;font-size:14px;color:var(--text2);margin-top:4px}
+.auth-switch button{color:var(--blue);font-weight:600;padding:4px}
+.auth-skip{
+  text-align:center;margin-top:8px;
+}
+.auth-skip button{font-size:14px;color:var(--text2);font-weight:500;padding:8px}
+.auth-tabs{display:flex;background:var(--surface2);border-radius:10px;padding:3px;gap:2px;margin-bottom:4px}
+.auth-tabs button{flex:1;padding:9px;border-radius:8px;font-size:14px;font-weight:600;color:var(--text2)}
+.auth-tabs button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+
 .about{text-align:center;padding:28px 16px;color:var(--text2)}
 .about b{display:block;font-size:18px;color:var(--text);margin-bottom:4px}
 .about p{font-size:13px}
@@ -453,6 +495,9 @@ button.setrow:active{background:var(--surface2)}
 </style>
 </head>
 <body>
+<div id="auth-screen" aria-hidden="true">
+  <div class="auth-box" id="auth-box"></div>
+</div>
 <div id="splash" role="status" aria-label="Loading">
   <div class="logo"><svg class="ic" viewBox="0 0 24 24" style="width:1em;height:1em"><path d="M3 17 9 11l4 4 8-8"/><path d="M15 7h6v6"/></svg></div>
   <h1>Budget<span>ly</span></h1>
@@ -470,6 +515,16 @@ button.setrow:active{background:var(--surface2)}
 <div id="print-area"></div>
 <input type="file" id="import-file" accept="application/json,.json" hidden/>
 <script>
+
+/* ==== SUPABASE CONFIG — paste your project values ==== */
+const SB_URL = 'https://bkrelamxpamesdeafvzb.supabase.co';          // e.g. https://xxxx.supabase.co
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrcmVsYW14cGFtZXNkZWFmdnpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5NTE3ODksImV4cCI6MjEwODUyNzc4OX0.Fddy96_nnVnOgebPfz3f64o-C4TPuY_FSdBAczUmKuc';    // Project Settings → API → anon public
+/* ===================================================== */
+const sbReady = SB_URL.startsWith('http') && SB_ANON.length > 20 && !SB_ANON.includes('YOUR_');
+const sb = sbReady ? supabase.createClient(SB_URL, SB_ANON) : null;
+let sbUser = null;
+let cloudTimer = null;
+
 const PROFILE={name:'mhrbhatti',tagline:'Designed & built by mhrbhatti',links:[{label:'Instagram',icon:'instagram',url:'https://instagram.com/mhrbhatti'},{label:'Website',icon:'globe',url:'https://mhrbhatti.tech'},{label:'LinkedIn',icon:'linkedin',url:'https://linkedin.com/in/mhrbhatti'},{label:'GitHub',icon:'link',url:''},{label:'Email',icon:'mail',url:''}]};
 const $= (s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -495,7 +550,57 @@ const DEFAULT_CATS=[['rent','Rent','house',0,'expense'],['groceries','Groceries'
 function defaultState(){return{v:2,settings:{currency:'PKR',theme:'auto',reminders:false,onboarded:false},cats:DEFAULT_CATS.map(c=>({...c})),tx:[],budgets:{},goals:[],recurring:[],debts:[]}}
 const lsGet=k=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):null}catch(e){return null}};
 let memoryOnly=false;
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){if(!memoryOnly){memoryOnly=true;toast('Storage unavailable — export a backup.')}}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){if(!memoryOnly){memoryOnly=true;toast('Storage unavailable — export a backup.')}}scheduleCloudSave()}
+function scheduleCloudSave(){
+  if(!sb||!sbUser)return;
+  clearTimeout(cloudTimer);
+  cloudTimer=setTimeout(pushCloud,800);
+}
+async function pushCloud(){
+  if(!sb||!sbUser)return;
+  try{
+    const payload={user_id:sbUser.id,data:state,updated_at:new Date().toISOString()};
+    const{error}=await sb.from('app_data').upsert(payload,{onConflict:'user_id'});
+    if(error)console.warn('cloud save',error.message);
+  }catch(e){console.warn('cloud save',e)}
+}
+async function pullCloud(){
+  if(!sb||!sbUser)return false;
+  try{
+    const{data,error}=await sb.from('app_data').select('data,updated_at').eq('user_id',sbUser.id).maybeSingle();
+    if(error){console.warn('cloud load',error.message);return false}
+    if(data&&data.data){
+      state=sanitize(data.data);
+      state.settings.onboarded=true;
+      try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}
+      return true;
+    }
+    // first login: upload local state
+    await pushCloud();
+    return false;
+  }catch(e){console.warn('cloud load',e);return false}
+}
+async function initAuth(){
+  if(!sb)return;
+  const{data:{session}}=await sb.auth.getSession();
+  sbUser=session&&session.user?session.user:null;
+  if(sbUser)await pullCloud();
+  sb.auth.onAuthStateChange(async(event,session)=>{
+    sbUser=session&&session.user?session.user:null;
+    if(event==='SIGNED_IN'&&sbUser){
+      await pullCloud();
+      hideAuthScreen();
+      render();
+      toast('Signed in');
+    }
+    if(event==='SIGNED_OUT'){
+      sbUser=null;
+      render();
+      toast('Signed out');
+    }
+  });
+}
+
 function sanitize(o){const d=defaultState();if(!o||typeof o!=='object')return d;const s={...d,...o,settings:{...d.settings,...(o.settings||{})}};s.cats=Array.isArray(o.cats)&&o.cats.length?o.cats.filter(c=>c&&c.id&&c.name):d.cats;['other','inc-other'].forEach(id=>{if(!s.cats.some(c=>c.id===id))s.cats.push(d.cats.find(c=>c.id===id))});s.tx=(Array.isArray(o.tx)?o.tx:[]).filter(t=>t&&(t.type==='income'||t.type==='expense')&&Number.isFinite(+t.amt)&&+t.amt>0&&/^\d{4}-\d{2}-\d{2}$/.test(t.date)).map(t=>({id:String(t.id||uid()),ts:+t.ts||0,type:t.type,amt:round2(+t.amt),cat:t.cat||(t.type==='income'?'inc-other':'other'),note:String(t.note||'').slice(0,60),date:t.date,rid:t.rid}));s.budgets=o.budgets&&typeof o.budgets==='object'?o.budgets:{};s.goals=(Array.isArray(o.goals)?o.goals:[]).filter(g=>g&&g.name&&+g.target>0).map(g=>({id:String(g.id||uid()),name:String(g.name).slice(0,40),target:+g.target,saved:Math.max(0,+g.saved||0),deadline:g.deadline||''}));s.recurring=(Array.isArray(o.recurring)?o.recurring:[]).filter(r=>r&&+r.amt>0&&r.day).map(r=>({id:String(r.id||uid()),type:r.type==='income'?'income':'expense',amt:+r.amt,cat:r.cat,note:String(r.note||''),day:Math.min(31,Math.max(1,+r.day)),lastRun:r.lastRun||curM()}));s.debts=(Array.isArray(o.debts)?o.debts:[]).filter(d=>d&&d.person&&+d.amt>0).map(d=>({id:String(d.id||uid()),person:String(d.person).slice(0,40),amt:round2(+d.amt),dir:d.dir==='i_owe'?'i_owe':'owed_to_me',note:String(d.note||'').slice(0,80),date:d.date&&/^\d{4}-\d{2}-\d{2}$/.test(d.date)?d.date:today(),settled:!!d.settled}));return s}
 function migrateLegacy(){const old=lsGet('budgetly_entries');if(!Array.isArray(old))return null;const s=defaultState();const byName={};s.cats.forEach(c=>{if(c.type==='expense')byName[c.name.toLowerCase()]=c.id});old.forEach(e=>{if(!e||!(+e.amt>0)||!/^\d{4}-\d{2}-\d{2}$/.test(e.date||''))return;const note=String(e.note||'');const cat=e.type==='income'?(/salar/i.test(note)?'salary':'inc-other'):(byName[note.toLowerCase().trim()]||(/sav(e|ing)/i.test(note)?'savings':'other'));s.tx.push({id:uid(),ts:+e.id||0,type:e.type==='income'?'income':'expense',amt:+e.amt,cat,note:note.slice(0,60),date:e.date})});const g=lsGet('budgetly_savings');if(g&&g.name&&+g.target>0){const saved=s.tx.filter(t=>t.type==='expense'&&/sav(e|ing)/i.test(t.note)).reduce((a,t)=>a+t.amt,0);s.goals.push({id:uid(),name:String(g.name),target:+g.target,saved,deadline:''})}if(lsGet('budgetly_theme'))s.settings.theme=lsGet('budgetly_theme');s.settings.onboarded=true;return s}
 let state=(()=>{const cur=lsGet(KEY);if(cur)return sanitize(cur);const m=migrateLegacy();return m?sanitize(m):defaultState()})();
@@ -580,7 +685,7 @@ function debtRow(d){
 function viewGoals(){let h=`<div class="sec" style="margin:4px 0 0"><h3>Savings goals</h3><button class="link" data-act="newGoal">+ New goal</button></div>`;if(!state.goals.length)return h+`<div class="list">${emptyState('target','Save for what matters','Create a goal and track your progress.',`<div style="margin-top:14px"><button class="btn primary sm" data-act="newGoal" style="margin:0 auto">Create a goal</button></div>`)}</div>`+footerHtml();h+=state.goals.map(g=>{const pct=Math.min(100,Math.round(g.saved/g.target*100));return`<section class="card goal"><div class="gt"><h4>${esc(g.name)}</h4><span class="gp">${pct}%</span></div><div class="prog" style="margin:4px 0"><i style="width:${pct}%;background:var(--blue)"></i></div><div class="gs"><b style="color:var(--text)">${fmt(g.saved)}</b> of ${fmt(g.target)}</div><div class="gs">${esc(goalMeta(g))}</div><div class="gbtns"><button class="btn primary sm" style="width:100%" data-act="fund" data-id="${esc(g.id)}">${ic('plus')} Add / withdraw</button><button class="btn ghost sm" data-act="editGoal" data-id="${esc(g.id)}" aria-label="Edit">${ic('pencil')}</button></div></section>`}).join('');return h+footerHtml()}
 function socialsHtml(){const l=PROFILE.links.filter(x=>x.url&&isUrl(x.url));if(!l.length)return'';return`<div class="socials">${l.map(x=>`<a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">${ic(x.icon)} ${esc(x.label)}</a>`).join('')}</div>`}
 function footerHtml(){return`<div class="footer">Budgetly · ${esc(PROFILE.tagline)}</div>`}
-function viewMore(){const S=state.settings,remOn=S.reminders&&'Notification' in window&&Notification.permission==='granted';const row=(icon,label,act,v='')=>`<button class="setrow" data-act="${act}"><span class="l">${ic(icon)}${label}</span><span class="v">${v}</span></button>`;return`<section><div class="sec"><h3>Preferences</h3></div><div class="list"><div class="setrow"><span class="l">${ic('moon')}Theme</span><div class="seg" style="min-width:180px">${['auto','light','dark'].map(v=>`<button class="${S.theme===v?'on':''}" data-act="theme" data-v="${v}">${v[0].toUpperCase()+v.slice(1)}</button>`).join('')}</div></div><div class="setrow"><label class="l" for="cur-sel">${ic('coins')}Currency</label><select id="cur-sel" data-chg="currency">${CURRENCIES.map(c=>`<option ${S.currency===c?'selected':''}>${c}</option>`).join('')}</select></div><button class="setrow" data-act="toggleRem" role="switch" aria-checked="${remOn}"><span class="l">${ic('bell')}Daily reminder</span><span class="toggle ${remOn?'on':''}"></span></button></div></section><section><div class="sec"><h3>Help</h3></div><div class="list">${row('sparkle','How to use Budgetly','openHelp')}</div></section><section><div class="sec"><h3>Money</h3></div><div class="list">${row('target','Savings goals','tabGoals',state.goals.length)}${row('coins','Debts & IOUs','tabDebts',state.debts.filter(d=>!d.settled).length)}</div></section><section><div class="sec"><h3>Manage</h3></div><div class="list">${row('tag','Categories','openCats',state.cats.length)}${row('repeat','Recurring','openRec',state.recurring.length)}</div></section><section><div class="sec"><h3>Tools</h3></div><div class="list">${row('fuel','Fuel cost','openFuel')}${row('landmark','Loan / EMI','openEmi')}</div></section><section><div class="sec"><h3>Data</h3></div><div class="list">${row('file','Print report','printReport')}${row('download','Export CSV','exportCsv')}${row('download','Backup JSON','exportJson')}${row('upload','Restore backup','importJson')}<button class="setrow" data-act="clearAll"><span class="l" style="color:var(--red)">${ic('trash')}Erase all data</span></button></div></section><div class="about"><b>Budgetly</b><p>${esc(PROFILE.tagline)}</p>${socialsHtml()}<p style="margin-top:8px;font-size:12px">Version 2.0</p></div>`}
+function viewMore(){const S=state.settings,remOn=S.reminders&&'Notification' in window&&Notification.permission==='granted';const row=(icon,label,act,v='')=>`<button class="setrow" data-act="${act}"><span class="l">${ic(icon)}${label}</span><span class="v">${v}</span></button>`;const accLabel=sbUser?(sbUser.email||'Account'):'Sign in / sync';const accVal=sbUser?'Cloud on':(sb?'':'Setup');return`<section><div class="sec"><h3>Account</h3></div><div class="list">${row('shield',accLabel,'openAuth',accVal)}</div></section><section><div class="sec"><h3>Preferences</h3></div><div class="list"><div class="setrow"><span class="l">${ic('moon')}Theme</span><div class="seg" style="min-width:180px">${['auto','light','dark'].map(v=>`<button class="${S.theme===v?'on':''}" data-act="theme" data-v="${v}">${v[0].toUpperCase()+v.slice(1)}</button>`).join('')}</div></div><div class="setrow"><label class="l" for="cur-sel">${ic('coins')}Currency</label><select id="cur-sel" data-chg="currency">${CURRENCIES.map(c=>`<option ${S.currency===c?'selected':''}>${c}</option>`).join('')}</select></div><button class="setrow" data-act="toggleRem" role="switch" aria-checked="${remOn}"><span class="l">${ic('bell')}Daily reminder</span><span class="toggle ${remOn?'on':''}"></span></button></div></section><section><div class="sec"><h3>Help</h3></div><div class="list">${row('sparkle','How to use Budgetly','openHelp')}</div></section><section><div class="sec"><h3>Money</h3></div><div class="list">${row('target','Savings goals','tabGoals',state.goals.length)}${row('coins','Debts & IOUs','tabDebts',state.debts.filter(d=>!d.settled).length)}</div></section><section><div class="sec"><h3>Manage</h3></div><div class="list">${row('tag','Categories','openCats',state.cats.length)}${row('repeat','Recurring','openRec',state.recurring.length)}</div></section><section><div class="sec"><h3>Tools</h3></div><div class="list">${row('fuel','Fuel cost','openFuel')}${row('landmark','Loan / EMI','openEmi')}</div></section><section><div class="sec"><h3>Data</h3></div><div class="list">${row('file','Print report','printReport')}${row('download','Export CSV','exportCsv')}${row('download','Backup JSON','exportJson')}${row('upload','Restore backup','importJson')}<button class="setrow" data-act="clearAll"><span class="l" style="color:var(--red)">${ic('trash')}Erase all data</span></button></div></section><div class="about"><b>Budgetly</b><p>${esc(PROFILE.tagline)}</p>${socialsHtml()}<p style="margin-top:8px;font-size:12px">Version 2.0</p></div>`}
 let tf=null;
 function openTx(id,pre){pre=pre||{};const ex=id?state.tx.find(t=>t.id===id):null;const type=ex?ex.type:(pre.type||(pre.cat&&cat(pre.cat).type)||'expense');tf={id:ex?ex.id:null,type,cat:ex?ex.cat:(pre.cat||null)};if(!tf.cat)tf.cat=null;const body=`<div class="seg tx" id="tx-seg"></div><label class="amt-in"><span>${esc(state.settings.currency)}</span><input id="tx-amt" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0" value="${ex?ex.amt:(pre.amt||'')}" aria-label="Amount" ${ex?'':'autofocus'}/></label><div><span class="fl">Category</span><div class="catgrid" id="tx-cats" role="radiogroup"></div></div><div><label class="fl" for="tx-note">Note</label><input id="tx-note" maxlength="60" placeholder="Optional" value="${esc(ex?ex.note:(pre.note||''))}"/></div><div><label class="fl" for="tx-date">Date</label><input id="tx-date" type="date" value="${ex?ex.date:today()}"/></div>${ex?'':`<label class="chk"><input type="checkbox" id="tx-rep"/><span>Repeat every month</span></label>`}<div class="btns">${ex?`<button class="btn danger-o" data-act="delTxSheet">Delete</button>`:''}<button class="btn primary" data-act="saveTx">${ex?'Save':'Add'}</button></div>`;openSheet(ex?'Edit transaction':'Add transaction',body,paintTx)}
 function paintTx(){$('#tx-seg').innerHTML=['expense','income'].map(t=>`<button class="${tf.type===t?'on '+t:''}" data-act="txType" data-type="${t}">${t==='expense'?'Expense':'Income'}</button>`).join('');const list=catsOf(tf.type);if(!list.some(c=>c.id===tf.cat))tf.cat=null;$('#tx-cats').innerHTML=list.map(c=>`<button type="button" class="cg ${tf.cat===c.id?'on':''}" style="--c:${c.color}" data-act="pickCat" data-id="${esc(c.id)}"><span class="ico" style="--c:${c.color}">${ic(c.icon)}</span><span>${esc(c.name)}</span></button>`).join('')}
@@ -640,6 +745,142 @@ function printReport(){const m=ui.month,s=stats(m),inc=s.list.filter(t=>t.type==
 function toggleRem(){if(!('Notification' in window))return toast('Notifications not supported');if(state.settings.reminders){state.settings.reminders=false;save();render();return toast('Reminder off')}Notification.requestPermission().then(p=>{if(p==='granted'){state.settings.reminders=true;save();render();toast('Reminder on')}else toast('Permission denied')})}
 setInterval(()=>{try{if(!state.settings.reminders||!('Notification' in window)||Notification.permission!=='granted')return;if(new Date().getHours()>=20&&localStorage.getItem('budgetly_lastrem')!==today()&&!state.tx.some(t=>t.date===today())){new Notification('Budgetly',{body:"Log today's spending."});localStorage.setItem('budgetly_lastrem',today())}}catch(e){}},60000);
 
+
+
+let authMode = 'login'; // login | signup
+function showAuthError(msg){
+  const el = $('#auth-err');
+  if(!el)return;
+  if(msg){el.textContent=msg;el.classList.add('show')}
+  else{el.textContent='';el.classList.remove('show')}
+}
+function paintAuth(){
+  const box = $('#auth-box');
+  if(!box)return;
+  if(!sb){
+    box.innerHTML = `
+      <div class="auth-logo">${ic('wallet')}</div>
+      <h1>Budget<span>ly</span></h1>
+      <p class="auth-sub">Cloud sync needs Supabase keys in the app file (SB_URL and SB_ANON).</p>
+      <button class="btn primary" data-act="skipAuth">Continue offline</button>`;
+    return;
+  }
+  const isLogin = authMode === 'login';
+  box.innerHTML = `
+    <div class="auth-logo">${ic('wallet')}</div>
+    <h1>Budget<span>ly</span></h1>
+    <p class="auth-sub">${isLogin ? 'Sign in to sync budgets & debts across devices' : 'Create an account to keep your data safe in the cloud'}</p>
+    <div class="auth-tabs">
+      <button class="${isLogin?'on':''}" data-act="authMode" data-mode="login">Sign in</button>
+      <button class="${!isLogin?'on':''}" data-act="authMode" data-mode="signup">Sign up</button>
+    </div>
+    <button class="btn google" data-act="signInGoogle">
+      <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.5-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.8 1.1 8 3l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.2 35.3 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l.1.1 6.3 5.2C41.3 36.1 44 30.7 44 24c0-1.3-.1-2.5-.4-3.5z"/></svg>
+      Continue with Google
+    </button>
+    <div class="auth-div">email</div>
+    <div class="auth-err" id="auth-err" role="alert"></div>
+    <div><label class="fl" for="au-email">Email</label><input id="au-email" type="email" placeholder="you@email.com" autocomplete="email"/></div>
+    <div><label class="fl" for="au-pass">Password</label><input id="au-pass" type="password" placeholder="${isLogin?'Your password':'Min 6 characters'}" autocomplete="${isLogin?'current-password':'new-password'}"/></div>
+    ${!isLogin?`<div><label class="fl" for="au-pass2">Confirm password</label><input id="au-pass2" type="password" placeholder="Repeat password" autocomplete="new-password"/></div>`:''}
+    <button class="btn primary" data-act="${isLogin?'signInEmail':'signUpEmail'}">${isLogin?'Sign in':'Create account'}</button>
+    <p class="auth-switch">${isLogin?'No account?':'Already have an account?'} <button data-act="authMode" data-mode="${isLogin?'signup':'login'}">${isLogin?'Sign up':'Sign in'}</button></p>
+    <div class="auth-skip"><button data-act="skipAuth">Continue without account</button></div>
+  `;
+}
+function showAuthScreen(){
+  authMode='login';
+  paintAuth();
+  const sc=$('#auth-screen');
+  sc.classList.add('show');
+  sc.setAttribute('aria-hidden','false');
+  document.body.classList.add('lock');
+}
+function hideAuthScreen(){
+  const sc=$('#auth-screen');
+  sc.classList.remove('show');
+  sc.setAttribute('aria-hidden','true');
+  document.body.classList.remove('lock');
+}
+function openAuth(){
+  if(sbUser){
+    openSheet('Account',`
+      <p style="font-size:14px;color:var(--text2)">Signed in as</p>
+      <p style="font-weight:600;margin-bottom:8px">${esc(sbUser.email||sbUser.id)}</p>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px">Your data syncs to the cloud when online.</p>
+      <button class="btn ghost" data-act="cloudPush">Upload now</button>
+      <button class="btn danger-o" data-act="signOut">Sign out</button>
+    `);
+    return;
+  }
+  showAuthScreen();
+}
+async function signInGoogle(){
+  if(!sb){showAuthError('Supabase not configured');return}
+  showAuthError('');
+  const redirectTo=location.href.split('#')[0];
+  const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo}});
+  if(error)showAuthError(error.message);
+}
+async function signInEmail(){
+  if(!sb)return;
+  const email=$('#au-email')&&$('#au-email').value.trim();
+  const password=$('#au-pass')&&$('#au-pass').value;
+  if(!email||!password||password.length<6){showAuthError('Enter email and password (6+ characters)');return}
+  showAuthError('');
+  const btn=document.querySelector('#auth-screen .btn.primary');
+  if(btn){btn.disabled=true;btn.textContent='Signing in…'}
+  const{error}=await sb.auth.signInWithPassword({email,password});
+  if(btn){btn.disabled=false;btn.textContent='Sign in'}
+  if(error){showAuthError(error.message);return}
+  hideAuthScreen();
+  render();
+  toast('Welcome back');
+}
+async function signUpEmail(){
+  if(!sb)return;
+  const email=$('#au-email')&&$('#au-email').value.trim();
+  const password=$('#au-pass')&&$('#au-pass').value;
+  const p2=$('#au-pass2')&&$('#au-pass2').value;
+  if(!email||!password||password.length<6){showAuthError('Enter email and password (6+ characters)');return}
+  if(password!==p2){showAuthError('Passwords do not match');return}
+  showAuthError('');
+  const btn=document.querySelector('#auth-screen .btn.primary');
+  if(btn){btn.disabled=true;btn.textContent='Creating…'}
+  const{data,error}=await sb.auth.signUp({email,password});
+  if(btn){btn.disabled=false;btn.textContent='Create account'}
+  if(error){showAuthError(error.message);return}
+  if(data.session){
+    hideAuthScreen();
+    render();
+    toast('Account created');
+  } else {
+    showAuthError('');
+    toast('Check your email to confirm, then sign in');
+    authMode='login';
+    paintAuth();
+  }
+}
+async function signOut(){
+  if(!sb)return;
+  await sb.auth.signOut();
+  closeSheet();
+  render();
+}
+async function cloudPush(){
+  await pushCloud();
+  toast('Uploaded to cloud');
+  closeSheet();
+}
+function skipAuth(){
+  hideAuthScreen();
+  try{localStorage.setItem('budgetly_skip_auth','1')}catch(e){}
+}
+function authModeSwitch(d){
+  authMode=d.mode==='signup'?'signup':'login';
+  paintAuth();
+}
+
 function openHelp(){
   openSheet('How to use Budgetly', `
     <div style="display:flex;flex-direction:column;gap:16px;font-size:15px;line-height:1.45;color:var(--text)">
@@ -680,8 +921,8 @@ function openHelp(){
       </div>
 
       <div>
-        <div style="font-weight:600;margin-bottom:4px">${ic('download')} Backup</div>
-        <p style="color:var(--text2);font-size:14px">In More → Backup JSON. Save the file somewhere safe. Use Restore backup if you change phones or clear browser data.</p>
+        <div style="font-weight:600;margin-bottom:4px">${ic('download')} Backup & cloud</div>
+        <p style="color:var(--text2);font-size:14px">Local: More → Backup JSON. Cloud: More → Sign in / sync (Google or email via Supabase) to keep data across devices.</p>
       </div>
 
       <button class="btn primary" data-act="closeSheet" style="margin-top:4px">Got it</button>
@@ -690,7 +931,7 @@ function openHelp(){
 }
 
 function welcome(){state.settings.onboarded=true;save();openSheet('Welcome to Budgetly',`<p style="font-size:15px;color:var(--text2);margin-bottom:8px">Private budget tracker — data stays on this device.</p><div style="font-size:14px;color:var(--text2);display:flex;flex-direction:column;gap:8px;margin-bottom:12px"><div>• Tap <b style="color:var(--text)">+</b> to add income or expenses</div><div>• Track who owes you (Debts tab)</div><div>• Set budgets and savings goals</div><div>• Swipe months with the header arrows</div><div>• Backup your data from More</div></div><div><label class="fl" for="w-cur">Currency</label><select id="w-cur" data-chg="currency">${CURRENCIES.map(c=>`<option ${state.settings.currency===c?'selected':''}>${c}</option>`).join('')}</select></div><div class="btns" style="flex-direction:column;gap:8px"><button class="btn primary" data-act="closeSheet">Get started</button><button class="btn ghost" data-act="openHelp">Full guide</button></div>`)}
-const A={tab:d=>{ui.tab=d.tab;render();window.scrollTo(0,0)},tabGoals:()=>{ui.tab='goals';render();window.scrollTo(0,0)},tabDebts:()=>{ui.tab='debts';render();window.scrollTo(0,0)},prevM:()=>{ui.month=addM(ui.month,-1);render()},nextM:()=>{if(ui.month<curM()){ui.month=addM(ui.month,1);render()}},thisM:()=>{ui.month=curM();render()},addTx:d=>{if(ui.tab==='debts')return openDebt();if(ui.tab==='goals')return openGoal();openTx(null,d.cat?{cat:d.cat}:{})},editTx:d=>openTx(d.id),txType:d=>{tf.type=d.type;paintTx()},pickCat:d=>{tf.cat=d.id;paintTx()},saveTx,delTxSheet:()=>delTx(tf.id),closeSheet,cfNo:closeConfirm,cfYes:()=>{const f=confirmFn;closeConfirm();f&&f()},ftype:d=>{ui.ftype=d.v;render()},editBudget:d=>openBudget(d.id),saveBudget:()=>{const v=parseFloat($('#b-amt').value);if(!(v>0))return toast('Enter a limit above 0');state.budgets[bf]=round2(v);save();closeSheet();render();toast('Budget saved')},rmBudget:()=>{delete state.budgets[bf];save();closeSheet();render();toast('Removed')},newDebt:()=>openDebt(),editDebt:d=>openDebt(d.id),debtDir:d=>{df.dir=d.dir;document.querySelectorAll('#d-seg button').forEach(b=>b.classList.toggle('on',b.dataset.dir===d.dir))},saveDebt,toggleSettle:()=>{const x=state.debts.find(d=>d.id===df.id);if(!x)return;x.settled=!x.settled;save();closeSheet();render();toast(x.settled?'Marked settled':'Marked open');buzz()},delDebt:()=>confirmBox('Delete this debt record?','Delete',()=>{state.debts=state.debts.filter(d=>d.id!==df.id);save();closeSheet();render();toast('Deleted')}),newGoal:()=>openGoal(),editGoal:d=>openGoal(d.id),fund:d=>openFund(d.id),saveGoal:()=>{const name=$('#g-name').value.trim(),target=parseFloat($('#g-target').value),saved=parseFloat($('#g-saved').value)||0,deadline=$('#g-dead').value;if(!name||!(target>0))return toast('Add a name and target');if(gf)Object.assign(state.goals.find(g=>g.id===gf),{name,target,saved:Math.max(0,saved),deadline});else state.goals.push({id:uid(),name,target,saved:Math.max(0,saved),deadline});save();closeSheet();render();toast('Goal saved')},delGoal:()=>confirmBox('Delete this goal?','Delete',()=>{state.goals=state.goals.filter(g=>g.id!==gf);save();closeSheet();render();toast('Deleted')}),fundAdd:()=>applyFund(1),fundSub:()=>applyFund(-1),theme:d=>{state.settings.theme=d.v;save();render()},toggleRem,openHelp,openCats,newCat:()=>openCat(null),editCat:d=>openCat(d.id),cType:d=>{cf.type=d.type;document.querySelectorAll('#c-seg button').forEach(b=>b.classList.toggle('on',b.dataset.type===d.type))},cIcon:d=>{cf.icon=d.i;paintCat()},cColor:d=>{cf.color=d.c;paintCat()},saveCat,delCat:()=>{const c=cat(cf.id),fb=c.type==='income'?'inc-other':'other';confirmBox(`Delete “${c.name}”? Transactions move to “${cat(fb).name}”.`,'Delete',()=>{state.tx.forEach(t=>{if(t.cat===cf.id)t.cat=fb});state.recurring.forEach(r=>{if(r.cat===cf.id)r.cat=fb});delete state.budgets[cf.id];state.cats=state.cats.filter(x=>x.id!==cf.id);save();render();openCats();toast('Deleted')})},openRec,delRec:d=>{state.recurring=state.recurring.filter(r=>r.id!==d.id);save();openRec();render();toast('Stopped')},openFuel,openEmi,calcFuel:()=>{const m=parseFloat($('#fu-m').value),p=parseFloat($('#fu-p').value),d=parseFloat($('#fu-d').value),n=parseFloat($('#fu-n').value)||30;if(!(m>0&&p>0&&d>0))return toast('Fill in all fields');calc={v:Math.round(d/m*p*n),note:'Fuel',cat:'fuel'};showRes(calc.v)},calcEmi:()=>{const p=parseFloat($('#em-p').value),rate=parseFloat($('#em-r').value),n=parseFloat($('#em-n').value);if(!(p>0)||!(rate>=0)||!(n>0))return toast('Fill in all fields');const r=rate/1200,e=r===0?p/n:p*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1),total=e*n;calc={v:Math.round(e),note:'Loan EMI',cat:'loan'};showRes(calc.v,`Total ${fmt(total)} · interest ${fmt(total-p)}`)},useCalc:()=>{if(calc.v)openTx(null,{type:'expense',cat:calc.cat,amt:calc.v,note:calc.note})},printReport,exportCsv,exportJson,importJson:()=>$('#import-file').click(),clearAll:()=>confirmBox('Erase ALL data? This cannot be undone.','Erase everything',()=>{const s=state.settings;state=defaultState();state.settings={...s,reminders:false};save();ui.tab='home';render();toast('Erased')})};
+const A={tab:d=>{ui.tab=d.tab;render();window.scrollTo(0,0)},tabGoals:()=>{ui.tab='goals';render();window.scrollTo(0,0)},tabDebts:()=>{ui.tab='debts';render();window.scrollTo(0,0)},prevM:()=>{ui.month=addM(ui.month,-1);render()},nextM:()=>{if(ui.month<curM()){ui.month=addM(ui.month,1);render()}},thisM:()=>{ui.month=curM();render()},addTx:d=>{if(ui.tab==='debts')return openDebt();if(ui.tab==='goals')return openGoal();openTx(null,d.cat?{cat:d.cat}:{})},editTx:d=>openTx(d.id),txType:d=>{tf.type=d.type;paintTx()},pickCat:d=>{tf.cat=d.id;paintTx()},saveTx,delTxSheet:()=>delTx(tf.id),closeSheet,cfNo:closeConfirm,cfYes:()=>{const f=confirmFn;closeConfirm();f&&f()},ftype:d=>{ui.ftype=d.v;render()},editBudget:d=>openBudget(d.id),saveBudget:()=>{const v=parseFloat($('#b-amt').value);if(!(v>0))return toast('Enter a limit above 0');state.budgets[bf]=round2(v);save();closeSheet();render();toast('Budget saved')},rmBudget:()=>{delete state.budgets[bf];save();closeSheet();render();toast('Removed')},newDebt:()=>openDebt(),editDebt:d=>openDebt(d.id),debtDir:d=>{df.dir=d.dir;document.querySelectorAll('#d-seg button').forEach(b=>b.classList.toggle('on',b.dataset.dir===d.dir))},saveDebt,toggleSettle:()=>{const x=state.debts.find(d=>d.id===df.id);if(!x)return;x.settled=!x.settled;save();closeSheet();render();toast(x.settled?'Marked settled':'Marked open');buzz()},delDebt:()=>confirmBox('Delete this debt record?','Delete',()=>{state.debts=state.debts.filter(d=>d.id!==df.id);save();closeSheet();render();toast('Deleted')}),newGoal:()=>openGoal(),editGoal:d=>openGoal(d.id),fund:d=>openFund(d.id),saveGoal:()=>{const name=$('#g-name').value.trim(),target=parseFloat($('#g-target').value),saved=parseFloat($('#g-saved').value)||0,deadline=$('#g-dead').value;if(!name||!(target>0))return toast('Add a name and target');if(gf)Object.assign(state.goals.find(g=>g.id===gf),{name,target,saved:Math.max(0,saved),deadline});else state.goals.push({id:uid(),name,target,saved:Math.max(0,saved),deadline});save();closeSheet();render();toast('Goal saved')},delGoal:()=>confirmBox('Delete this goal?','Delete',()=>{state.goals=state.goals.filter(g=>g.id!==gf);save();closeSheet();render();toast('Deleted')}),fundAdd:()=>applyFund(1),fundSub:()=>applyFund(-1),theme:d=>{state.settings.theme=d.v;save();render()},toggleRem,openHelp,openAuth,signInGoogle,signInEmail,signUpEmail,signOut,cloudPush,skipAuth,authMode:authModeSwitch,openCats,newCat:()=>openCat(null),editCat:d=>openCat(d.id),cType:d=>{cf.type=d.type;document.querySelectorAll('#c-seg button').forEach(b=>b.classList.toggle('on',b.dataset.type===d.type))},cIcon:d=>{cf.icon=d.i;paintCat()},cColor:d=>{cf.color=d.c;paintCat()},saveCat,delCat:()=>{const c=cat(cf.id),fb=c.type==='income'?'inc-other':'other';confirmBox(`Delete “${c.name}”? Transactions move to “${cat(fb).name}”.`,'Delete',()=>{state.tx.forEach(t=>{if(t.cat===cf.id)t.cat=fb});state.recurring.forEach(r=>{if(r.cat===cf.id)r.cat=fb});delete state.budgets[cf.id];state.cats=state.cats.filter(x=>x.id!==cf.id);save();render();openCats();toast('Deleted')})},openRec,delRec:d=>{state.recurring=state.recurring.filter(r=>r.id!==d.id);save();openRec();render();toast('Stopped')},openFuel,openEmi,calcFuel:()=>{const m=parseFloat($('#fu-m').value),p=parseFloat($('#fu-p').value),d=parseFloat($('#fu-d').value),n=parseFloat($('#fu-n').value)||30;if(!(m>0&&p>0&&d>0))return toast('Fill in all fields');calc={v:Math.round(d/m*p*n),note:'Fuel',cat:'fuel'};showRes(calc.v)},calcEmi:()=>{const p=parseFloat($('#em-p').value),rate=parseFloat($('#em-r').value),n=parseFloat($('#em-n').value);if(!(p>0)||!(rate>=0)||!(n>0))return toast('Fill in all fields');const r=rate/1200,e=r===0?p/n:p*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1),total=e*n;calc={v:Math.round(e),note:'Loan EMI',cat:'loan'};showRes(calc.v,`Total ${fmt(total)} · interest ${fmt(total-p)}`)},useCalc:()=>{if(calc.v)openTx(null,{type:'expense',cat:calc.cat,amt:calc.v,note:calc.note})},printReport,exportCsv,exportJson,importJson:()=>$('#import-file').click(),clearAll:()=>confirmBox('Erase ALL data? This cannot be undone.','Erase everything',()=>{const s=state.settings;state=defaultState();state.settings={...s,reminders:false};save();ui.tab='home';render();toast('Erased')})};
 document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||!A[t.dataset.act])return;A[t.dataset.act](t.dataset,t,e)});
 document.addEventListener('change',e=>{const k=e.target.dataset&&e.target.dataset.chg;if(!k)return;if(k==='currency'){state.settings.currency=e.target.value;save();render()}if(k==='fcat'){ui.fcat=e.target.value;paintActList()}});
 document.addEventListener('input',e=>{if(e.target.id==='act-q'){ui.q=e.target.value;paintActList()}});
@@ -698,8 +939,13 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('#confirm').cl
 $('#sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeSheet()});
 $('#confirm').addEventListener('click',e=>{if(e.target.id==='confirm')closeConfirm()});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&runRecurring())render()});
-runRecurring();render();
-window.addEventListener('load',()=>{setTimeout(()=>{$('#splash').classList.add('gone');setTimeout(()=>{$('#splash').remove();if(!state.settings.onboarded&&!state.tx.length)welcome()},500)},600)});
+runRecurring();
+(async()=>{try{await initAuth()}catch(e){console.warn(e)}render()})();
+window.addEventListener('load',()=>{setTimeout(()=>{$('#splash').classList.add('gone');setTimeout(()=>{$('#splash').remove();
+  const skipped=(()=>{try{return localStorage.getItem('budgetly_skip_auth')==='1'}catch(e){return false}})();
+  if(sb&&!sbUser&&!skipped)showAuthScreen();
+  else if(!state.settings.onboarded&&!state.tx.length)welcome();
+},500)},600)});
 </script>
 </body>
 </html>
